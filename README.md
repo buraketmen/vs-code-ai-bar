@@ -6,18 +6,21 @@ It's built with React, TailwindCSS, TypeScript, Webpack, and VS Code Webview API
 
 It's a fork of [AI Assistant for VS Code](https://github.com/microsoft/vscode-extension-samples/tree/main/ai-assistant-sample)
 
+![Preview](https://github.com/buraketmen/vs-code-ai-bar/blob/main/external/base.png)
 
 ## Features
 
-[X] Modern and user-friendly tech stack
-[X] Seamless integration with VS Code theme colors
-[X] Easy access with keyboard shortcut (CTRL + SHIFT + J)
-[] Real-time chat experience
-[] Integration with LLM providers
-[] Customizable prompts, executing prompt using selected code
-[] Testing with Jest and React Testing Library
-[] CI/CD with GitHub Actions
-[] Shadcn ui components (Optional)
+
+
+- [X] Modern and user-friendly tech stack
+- [X] Seamless integration with VS Code theme colors
+- [X] Easy access with keyboard shortcut (CTRL + SHIFT + J)
+- [ ] Real-time chat experience
+- [ ] Integration with LLM providers
+- [ ] Customizable prompts, executing prompt using selected code
+- [ ] Testing with Jest and React Testing Library
+- [ ] CI/CD with GitHub Actions
+- [ ] Shadcn ui components (Optional)
 
 ## Development
 
