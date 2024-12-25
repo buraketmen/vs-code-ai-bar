@@ -1,0 +1,90 @@
+{
+    "name": "ai-bar",
+    "displayName": "AI Assistant Bar",
+    "description": "AI Assistant sidebar for Visual Studio Code with chat interface",
+    "version": "0.0.1",
+    "publisher": "ai-bar",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/buraketmen/vs-code-ai-extension"
+    },
+    "engines": {
+        "vscode": "^1.96.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "ai-bar.showPanel",
+                "title": "Show AI Assistant"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "ai-bar.showPanel",
+                "key": "ctrl+shift+j",
+                "mac": "cmd+shift+j"
+            }
+        ],
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "ai-bar-container",
+                    "title": "AI Assistant",
+                    "icon": "$(robot)"
+                }
+            ]
+        },
+        "views": {
+            "ai-bar-container": [
+                {
+                    "id": "ai-bar-view",
+                    "name": "AI Assistant View",
+                    "type": "webview"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run package",
+        "compile": "webpack",
+        "watch": "webpack --watch",
+        "package": "webpack --mode production --devtool hidden-source-map",
+        "compile-tests": "tsc -p . --outDir out",
+        "watch-tests": "tsc -p . -w --outDir out",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
+        "lint": "eslint src",
+        "test": "vscode-test",
+        "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css}\""
+    },
+    "devDependencies": {
+        "@types/mocha": "^10.0.10",
+        "@types/node": "20.x",
+        "@types/react": "^19.0.2",
+        "@types/react-dom": "^19.0.2",
+        "@types/vscode": "^1.96.0",
+        "@typescript-eslint/eslint-plugin": "^8.17.0",
+        "@typescript-eslint/parser": "^8.17.0",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.4.1",
+        "autoprefixer": "^10.4.20",
+        "css-loader": "^7.1.2",
+        "eslint": "^9.16.0",
+        "postcss": "^8.4.49",
+        "postcss-loader": "^8.1.1",
+        "prettier": "^3.4.2",
+        "prettier-plugin-tailwindcss": "^0.6.9",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "style-loader": "^4.0.0",
+        "tailwindcss": "^3.4.17",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.7.2",
+        "webpack": "^5.95.0",
+        "webpack-cli": "^5.1.4"
+    }
+}

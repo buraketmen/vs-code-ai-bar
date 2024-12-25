@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --vscode-bg: var(--vscode-editor-background);
+    --vscode-fg: var(--vscode-editor-foreground);
+    --vscode-input-bg: var(--vscode-input-background);
+    --vscode-border: var(--vscode-panel-border);
+    --vscode-button-bg: var(--vscode-button-background);
+    --vscode-button-fg: var(--vscode-button-foreground);
+    --vscode-button-hover: var(--vscode-button-hoverBackground);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+textarea {
+    resize: none !important;
+}
+
+/* VS Code theme specific classes */
+.bg-vscode-bg {
+    background-color: var(--vscode-bg);
+}
+.text-vscode-fg {
+    color: var(--vscode-fg);
+}
+.bg-vscode-input-bg {
+    background-color: var(--vscode-input-bg);
+}
+.border-vscode-border {
+    border-color: var(--vscode-border);
+}
+.bg-vscode-button-bg {
+    background-color: var(--vscode-button-bg);
+}
+.text-vscode-button-fg {
+    color: var(--vscode-button-fg);
+}
+.hover\:bg-vscode-button-hover:hover {
+    background-color: var(--vscode-button-hover);
+}
+
+/* Custom animations */
+@keyframes bounce {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-25%);
+    }
+}
+
+.animate-bounce {
+    animation: bounce 1s infinite;
+}
+
+.delay-100 {
+    animation-delay: 100ms;
+}
+
+.delay-200 {
+    animation-delay: 200ms;
+}
