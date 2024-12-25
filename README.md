@@ -14,7 +14,7 @@ It's a fork of [AI Assistant for VS Code](https://github.com/microsoft/vscode-ex
 
 - [X] Modern and user-friendly tech stack
 - [X] Seamless integration with VS Code theme colors
-- [X] Easy access with keyboard shortcut (CTRL + SHIFT + J)
+- [X] Easy access with keyboard shortcut `CMD + SHIFT + J`
 - [ ] Real-time chat experience
 - [ ] Integration with LLM providers
 - [ ] Customizable prompts, executing prompt using selected code
@@ -26,12 +26,12 @@ It's a fork of [AI Assistant for VS Code](https://github.com/microsoft/vscode-ex
 
 1. Clone the repository
 2. Run `npm install`
-3. Open VS Code and press F5 to start debugging
+3. Open VS Code and press `F5` to start debugging
 4. Accept the dialog to debug the extension
-5. Press CTRL + SHIFT + J to open the "AI" Assistant
-6. Press CTRL + R to reload the extension (if you make changes to the code)
+5. Press `CMD + SHIFT + J` to open the "AI" Assistant
+6. Press `CMD + R` to reload the extension (if you make changes to the code)
 
-# Packaging
+## Packaging
 
 ```bash
 npm run package
