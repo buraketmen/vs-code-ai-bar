@@ -12,7 +12,7 @@ const MessageBubbleComponent: React.FC<MessageBubbleProps> = ({ message }) => {
     const handleCopy = () => {
         navigator.clipboard.writeText(message.text);
         setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000); // 2 saniye sonra eski haline dön
+        setTimeout(() => setIsCopied(false), 2000); // Wait 2 seconds to revert
     };
 
     if (isAI) {
