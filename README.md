@@ -31,6 +31,14 @@ It's a fork of [AI Assistant for VS Code](https://github.com/microsoft/vscode-ex
 5. Press CTRL + SHIFT + J to open the "AI" Assistant
 6. Press CTRL + R to reload the extension (if you make changes to the code)
 
+# Packaging
+
+```bash
+npm run package
+npm install -g @vscode/vsce
+vsce package --allow-missing-repository
+```
+
 ## License
 
 MIT
