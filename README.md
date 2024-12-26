@@ -4,8 +4,6 @@ An AI assistant extension example for Visual Studio Code that provides a chat in
 
 It's built with React, TailwindCSS, TypeScript, Webpack, and VS Code Webview API.
 
-It's a fork of [AI Assistant for VS Code](https://github.com/microsoft/vscode-extension-samples/tree/main/ai-assistant-sample)
-
 ![Preview](https://github.com/buraketmen/vs-code-ai-bar/blob/main/external/base.png)
 
 ## Features
