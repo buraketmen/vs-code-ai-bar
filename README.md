@@ -13,6 +13,8 @@ It's built with React, TailwindCSS, TypeScript, Webpack, and VS Code Webview API
 - [X] Modern and user-friendly tech stack
 - [X] Seamless integration with VS Code theme colors
 - [X] Easy access with keyboard shortcut `CMD + SHIFT + J`
+- [X] Chat history
+- [ ] Undo & Redo Chat deletion
 - [ ] Real-time chat experience
 - [ ] Integration with LLM providers
 - [ ] Customizable prompts, executing prompt using selected code
