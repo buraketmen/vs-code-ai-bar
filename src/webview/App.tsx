@@ -4,25 +4,17 @@ import { ChatHistory } from './components/chat-history';
 import { MessageInput } from './components/messaging/message-input';
 import { MessageList } from './components/messaging/message-list';
 import { useChatContext } from './contexts/chat-context';
-import { AIModel } from './types';
+import { useModelContext } from './contexts/model-context';
 
 export const App: React.FC = () => {
     const { currentSession, isTyping, sendMessage, createNewChat } = useChatContext();
+    const { selectedModel } = useModelContext();
 
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [inputText, setInputText] = useState('');
-    const [selectedModel, setSelectedModel] = useState<AIModel>('gpt-3.5-turbo');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const popupRef = useRef<HTMLDivElement>(null);
-
-    // Load saved model preference
-    useEffect(() => {
-        const savedModel = localStorage.getItem('selectedModel');
-        if (savedModel) {
-            setSelectedModel(savedModel as AIModel);
-        }
-    }, []);
 
     const handleCloseHistory = useCallback(() => {
         setIsHistoryOpen(false);
@@ -32,20 +24,12 @@ export const App: React.FC = () => {
         setInputText(text);
     }, []);
 
-    const handleModelChange = useCallback((model: AIModel) => {
-        setSelectedModel(model);
-        localStorage.setItem('selectedModel', model);
-    }, []);
-
     const handleSubmit = useCallback(
-        async (e: React.FormEvent) => {
-            e.preventDefault();
-            if (!inputText.trim()) return;
-
-            sendMessage(inputText, selectedModel);
+        (text: string) => {
+            sendMessage(text, selectedModel);
             setInputText('');
         },
-        [inputText, selectedModel, sendMessage]
+        [sendMessage, selectedModel]
     );
 
     // Listen for messages from extension
@@ -89,8 +73,6 @@ export const App: React.FC = () => {
                     isTyping={isTyping}
                     onInputChange={setInputText}
                     onSubmit={handleSubmit}
-                    selectedModel={selectedModel}
-                    onModelChange={setSelectedModel}
                 />
             </div>
             <ChatHistory

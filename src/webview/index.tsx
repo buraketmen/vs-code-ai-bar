@@ -1,7 +1,7 @@
-import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
-import { ChatProvider, useChatContext } from './contexts/chat-context';
+import { ChatProvider } from './contexts/chat-context';
+import { ModelProvider } from './contexts/model-context';
 import './styles.css';
 
 declare global {
@@ -23,35 +23,13 @@ declare global {
 const vscode = acquireVsCodeApi();
 window.vscode = vscode;
 
-const UndoRedoHandler: React.FC = () => {
-    const { canUndo, canRedo, undoDelete, redoDelete } = useChatContext();
-
-    React.useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
-                if (e.shiftKey && canRedo) {
-                    e.preventDefault();
-                    redoDelete();
-                } else if (canUndo) {
-                    e.preventDefault();
-                    undoDelete();
-                }
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [canUndo, canRedo, undoDelete, redoDelete]);
-
-    return null;
-};
-
 const container = document.getElementById('root');
 const root = createRoot(container!);
 
 root.render(
     <ChatProvider>
-        <UndoRedoHandler />
-        <App />
+        <ModelProvider>
+            <App />
+        </ModelProvider>
     </ChatProvider>
 );

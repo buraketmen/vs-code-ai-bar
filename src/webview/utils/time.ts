@@ -1,9 +1,5 @@
 import { TimeGroup } from '../types';
 
-export type GroupedSessions<T> = {
-    [key in TimeGroup]?: T[];
-};
-
 export function getTimeGroup(date: string): TimeGroup {
     const now = new Date();
     const past = new Date(date);

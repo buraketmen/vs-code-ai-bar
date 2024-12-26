@@ -1,13 +1,11 @@
 import * as React from 'react';
-import { AIModel, AI_MODELS } from '../../types';
+import ModelSelect from '../model-select';
 
 interface MessageInputProps {
     inputText: string;
     isTyping: boolean;
     onInputChange: (text: string) => void;
-    onSubmit: (e: React.FormEvent) => void;
-    selectedModel: AIModel;
-    onModelChange: (model: AIModel) => void;
+    onSubmit: (text: string) => void;
 }
 
 const MessageInputComponent: React.FC<MessageInputProps> = ({
@@ -15,8 +13,6 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
     isTyping,
     onInputChange,
     onSubmit,
-    selectedModel,
-    onModelChange,
 }) => {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const [isFocused, setIsFocused] = React.useState(false);
@@ -29,19 +25,11 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
         }
     }, [inputText]);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter') {
-            if (!e.shiftKey) {
-                e.preventDefault();
-                if (!isTyping && inputText.trim()) {
-                    onSubmit(e as any);
-                }
-            }
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (inputText.trim() && !isTyping) {
+            onSubmit(inputText);
         }
-    };
-
-    const handleModelSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        onModelChange(e.target.value as AIModel);
     };
 
     return (
@@ -50,13 +38,18 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
                 isFocused ? 'border-vscode-border-hover' : ''
             }`}
         >
-            <form onSubmit={onSubmit}>
+            <form onSubmit={handleSubmit}>
                 <div className="h-full w-full">
                     <textarea
                         ref={textareaRef}
                         value={inputText}
                         onChange={(e) => onInputChange(e.target.value)}
-                        onKeyDown={handleKeyDown}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit(e);
+                            }
+                        }}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="Type your message..."
@@ -66,26 +59,7 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
                 </div>
                 <div className="flex w-full items-center justify-between gap-2 border-t border-vscode-border pt-1">
                     <div className="flex min-w-0 gap-1.5">
-                        <select
-                            value={selectedModel}
-                            onChange={handleModelSelect}
-                            className="w-full min-w-[64px] max-w-[112px] truncate rounded-sm border-none bg-vscode-bg-secondary py-1 text-xs opacity-50 outline-none hover:opacity-100 focus:outline-none focus:ring-0 focus-visible:outline-none [&_optgroup]:!font-semibold [&_option]:pl-0 [&_option]:!font-normal"
-                        >
-                            <optgroup label="ChatGPT">
-                                {AI_MODELS.chatgpt.map((model) => (
-                                    <option key={model} value={model} className="truncate">
-                                        {model}
-                                    </option>
-                                ))}
-                            </optgroup>
-                            <optgroup label="Claude">
-                                {AI_MODELS.claude.map((model) => (
-                                    <option key={model} value={model} className="truncate">
-                                        {model}
-                                    </option>
-                                ))}
-                            </optgroup>
-                        </select>
+                        <ModelSelect />
                     </div>
                     <button
                         type="submit"

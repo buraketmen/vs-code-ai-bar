@@ -1,5 +1,13 @@
 import * as React from 'react';
-import { createContext, useCallback, useContext, useEffect, useReducer, useState } from 'react';
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useReducer,
+    useState,
+} from 'react';
 import { AIManager } from '../ai/ai-manager';
 import { AIModel, ChatSession, ChatState, GroupedSessions, Message } from '../types';
 import { getTimeGroup } from '../utils/time';
@@ -246,7 +254,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const getGroupedSessions = useCallback(
         (searchQuery: string): GroupedSessions => {
-            // 1. Filter sessions based on search query
             let filtered = chatState.sessions;
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase();
@@ -257,12 +264,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 );
             }
 
-            // 2. Sort all sessions by lastUpdatedAt (newest first)
             filtered = [...filtered].sort(
                 (a, b) => new Date(b.lastUpdatedAt).getTime() - new Date(a.lastUpdatedAt).getTime()
             );
 
-            // 3. Group sorted sessions
             const groups = filtered.reduce((acc, session) => {
                 const group = getTimeGroup(session.lastUpdatedAt);
                 if (!acc[group]) {
@@ -281,22 +286,39 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? chatState.sessions.find((s) => s.id === chatState.currentSessionId) || null
         : null;
 
-    const value = {
-        sessions: chatState.sessions,
-        currentSession,
-        currentSessionId: chatState.currentSessionId,
-        isTyping,
-        canUndo: deletedSessions.length > 0,
-        canRedo: redoStack.length > 0,
-        selectSession,
-        createNewChat,
-        sendMessage,
-        renameSession,
-        deleteSession,
-        undoDelete,
-        redoDelete,
-        getGroupedSessions,
-    };
+    const value = useMemo(
+        () => ({
+            sessions: chatState.sessions,
+            currentSession,
+            currentSessionId: chatState.currentSessionId,
+            isTyping,
+            canUndo: deletedSessions.length > 0,
+            canRedo: redoStack.length > 0,
+            selectSession,
+            createNewChat,
+            sendMessage,
+            renameSession,
+            deleteSession,
+            undoDelete,
+            redoDelete,
+            getGroupedSessions,
+        }),
+        [
+            chatState.sessions,
+            chatState.currentSessionId,
+            isTyping,
+            deletedSessions,
+            redoStack,
+            selectSession,
+            createNewChat,
+            sendMessage,
+            renameSession,
+            deleteSession,
+            undoDelete,
+            redoDelete,
+            getGroupedSessions,
+        ]
+    );
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
 };
