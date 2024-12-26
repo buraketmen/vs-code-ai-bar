@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { createContext, useCallback, useContext, useEffect, useReducer, useState } from 'react';
 import { AIManager } from '../ai/ai-manager';
-import { AIModel, ChatSession, ChatState, GroupedSessions, Message, TimeGroup } from '../types';
+import { AIModel, ChatSession, ChatState, GroupedSessions, Message } from '../types';
+import { getTimeGroup } from '../utils/time';
 
 interface ChatContextType {
     sessions: ChatSession[];
@@ -68,30 +69,6 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
             };
         default:
             return state;
-    }
-}
-
-function getTimeGroup(date: string): TimeGroup {
-    const now = new Date();
-    const sessionDate = new Date(date);
-    const diffInMinutes = Math.floor((now.getTime() - sessionDate.getTime()) / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInMinutes < 60) {
-        return TimeGroup.JUST_NOW;
-    } else if (diffInHours < 1) {
-        return TimeGroup.LAST_HOUR;
-    } else if (diffInHours < 3) {
-        return TimeGroup.LAST_3_HOURS;
-    } else if (diffInHours < 24) {
-        return TimeGroup.LAST_24_HOURS;
-    } else if (diffInDays < 7) {
-        return TimeGroup.LAST_WEEK;
-    } else if (diffInDays < 30) {
-        return TimeGroup.LAST_MONTH;
-    } else {
-        return TimeGroup.OLDER;
     }
 }
 
