@@ -2,50 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme Variables */
 :root {
-    --vscode-bg: var(--vscode-editor-background);
+    /* Base Colors */
+    --vscode-bg: var(--vscode-sideBar-background);
+    --vscode-bg-secondary: var(--vscode-editor-background);
     --vscode-fg: var(--vscode-editor-foreground);
+
+    /* Input & Controls */
     --vscode-input-bg: var(--vscode-input-background);
-    --vscode-border: var(--vscode-panel-border);
+    --vscode-input-fg: var(--vscode-input-foreground);
+    --vscode-input-border: var(--vscode-input-border, var(--vscode-panel-border));
+    --vscode-input-border-hover: var(--vscode-button-hoverBackground);
+    --vscode-input-border-active: var(--vscode-button-hoverBackground);
+
+    /* Buttons */
     --vscode-button-bg: var(--vscode-button-background);
     --vscode-button-fg: var(--vscode-button-foreground);
     --vscode-button-hover: var(--vscode-button-hoverBackground);
+
+    /* Borders */
+    --vscode-border: var(--vscode-panel-border);
+    --vscode-border-hover: var(--vscode-button-hoverBackground);
+
+    /* Lists & Selection */
+    --vscode-list-hover: var(--vscode-list-hoverBackground, rgba(255, 255, 255, 0.1));
+    --vscode-list-active: var(--vscode-list-activeSelectionBackground);
+    --vscode-list-active-hover: var(
+        --vscode-list-activeSelectionBackground,
+        var(--vscode-list-hoverBackground)
+    );
+    --vscode-list-inactive: var(--vscode-list-inactiveSelectionBackground);
+
+    /* Icons & Special Colors */
+    --vscode-icon-fg: var(--vscode-icon-foreground);
+    --vscode-error-fg: var(--vscode-errorForeground);
+
+    /* Selection */
+    --vscode-selection-bg: var(--vscode-editor-selectionBackground);
+    --vscode-selection-fg: var(
+        --vscode-editor-selectionForeground,
+        var(--vscode-editor-foreground)
+    );
+}
+
+/* Base Styles */
+html,
+body {
+    @apply m-0 h-screen p-0;
 }
 
 * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+    @apply m-0 box-border p-0;
 }
 
+/* Form Elements */
 textarea {
-    resize: none !important;
+    @apply resize-none border-none outline-none;
 }
 
-/* VS Code theme specific classes */
-.bg-vscode-bg {
-    background-color: var(--vscode-bg);
-}
-.text-vscode-fg {
-    color: var(--vscode-fg);
-}
-.bg-vscode-input-bg {
-    background-color: var(--vscode-input-bg);
-}
-.border-vscode-border {
-    border-color: var(--vscode-border);
-}
-.bg-vscode-button-bg {
-    background-color: var(--vscode-button-bg);
-}
-.text-vscode-button-fg {
-    color: var(--vscode-button-fg);
-}
-.hover\:bg-vscode-button-hover:hover {
-    background-color: var(--vscode-button-hover);
+input {
+    @apply border-vscode-border hover:border-vscode-border-hover focus:border-vscode-border-hover active:border-vscode-border-hover outline-none transition-colors duration-150;
 }
 
-/* Custom animations */
+button {
+    @apply transition-colors duration-150;
+}
+
+/* Component Specific Styles */
+@layer components {
+    .chat-session {
+        @apply transition-colors duration-150;
+    }
+
+    .chat-session:hover .rename-button {
+        @apply opacity-100;
+    }
+
+    .rename-button {
+        @apply transition-opacity duration-150;
+    }
+}
+
+/* Animations */
+@keyframes gradient {
+    0% {
+        background-position: 200% 50%;
+    }
+    100% {
+        background-position: -200% 50%;
+    }
+}
+
+.animate-gradient {
+    background: linear-gradient(
+        90deg,
+        var(--vscode-fg) 0%,
+        rgba(127, 127, 127, 0.5) 50%,
+        var(--vscode-fg) 100%
+    );
+    color: transparent;
+    background-size: 200% 100%;
+    animation: gradient 3s linear infinite;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
 @keyframes bounce {
     0%,
     100% {
@@ -58,12 +121,4 @@ textarea {
 
 .animate-bounce {
     animation: bounce 1s infinite;
-}
-
-.delay-100 {
-    animation-delay: 100ms;
-}
-
-.delay-200 {
-    animation-delay: 200ms;
 }

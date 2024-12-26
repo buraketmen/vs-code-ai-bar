@@ -1,7 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as path from 'path';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -11,148 +10,144 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel.show();
     outputChannel.appendLine('AI Assistant extension is now active!');
 
-    let currentPanel: vscode.WebviewPanel | undefined = undefined;
+    let currentPanel: vscode.WebviewView | undefined = undefined;
 
-    let disposable = vscode.commands.registerCommand('ai-bar.showPanel', () => {
-        outputChannel.appendLine('Show panel command triggered');
+    // Register WebviewViewProvider
+    const provider = new AIAssistantViewProvider(context.extensionUri);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider('ai-bar-view', provider, {
+            webviewOptions: {
+                retainContextWhenHidden: true,
+            },
+        })
+    );
 
-        if (currentPanel) {
-            outputChannel.appendLine('Revealing existing panel');
-            currentPanel.reveal(vscode.ViewColumn.Two);
+    // Register focus command
+    let focusDisposable = vscode.commands.registerCommand('ai-bar.focus', async () => {
+        const view = await vscode.commands.executeCommand('ai-bar-view.focus');
+        return view;
+    });
+
+    // Register new chat command
+    let newChatDisposable = vscode.commands.registerCommand('ai-bar.newChat', () => {
+        console.log('New chat command triggered');
+        if (provider.currentView) {
+            console.log('Sending newChat message to webview');
+            provider.currentView.webview.postMessage({ type: 'newChat' });
         } else {
-            outputChannel.appendLine('Creating new panel');
-            currentPanel = vscode.window.createWebviewPanel(
-                'aiBar',
-                'AI Assistant',
-                vscode.ViewColumn.Two,
-                {
-                    enableScripts: true,
-                    localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'dist'))],
-                    // Enable DevTools
-                    enableFindWidget: true,
-                    retainContextWhenHidden: true,
-                }
-            );
-
-            const scriptUri = currentPanel.webview.asWebviewUri(
-                vscode.Uri.file(path.join(context.extensionPath, 'dist', 'webview.js'))
-            );
-            outputChannel.appendLine('Script URI: ' + scriptUri.toString());
-
-            currentPanel.webview.html = getWebviewContent(scriptUri);
-            outputChannel.appendLine('Webview HTML set');
-
-            // Enable webview logging
-            currentPanel.webview.onDidReceiveMessage(
-                (message) => {
-                    switch (message.type) {
-                        case 'log':
-                            outputChannel.appendLine('Webview: ' + message.message);
-                            break;
-                        case 'error':
-                            outputChannel.appendLine('Webview Error: ' + message.message);
-                            break;
-                    }
-                },
-                undefined,
-                context.subscriptions
-            );
-
-            currentPanel.onDidDispose(
-                () => {
-                    outputChannel.appendLine('Panel disposed');
-                    currentPanel = undefined;
-                },
-                null,
-                context.subscriptions
-            );
+            console.log('No webview available');
         }
     });
 
-    context.subscriptions.push(disposable);
+    // Register history toggle command
+    let toggleHistoryDisposable = vscode.commands.registerCommand('ai-bar.toggleHistory', () => {
+        console.log('Toggle history command triggered');
+        if (provider.currentView) {
+            console.log('Sending toggleHistory message to webview');
+            provider.currentView.webview.postMessage({ type: 'toggleHistory' });
+        } else {
+            console.log('No webview available');
+        }
+    });
+
+    context.subscriptions.push(focusDisposable, toggleHistoryDisposable, newChatDisposable);
 }
 
-function getWebviewContent(scriptUri: vscode.Uri) {
-    const nonce = getNonce();
+class AIAssistantViewProvider implements vscode.WebviewViewProvider {
+    private _view?: vscode.WebviewView;
 
-    const html = `<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' vscode-resource:; script-src 'nonce-${nonce}' 'unsafe-eval' vscode-resource:; connect-src vscode-resource:; img-src vscode-resource: https:">
-			<title>AI Assistant</title>
-			<style>
-				html, body {
-					height: 100vh;
-					padding: 0;
-					margin: 0;
-					background-color: var(--vscode-editor-background);
-					color: var(--vscode-editor-foreground);
-				}
-				#root {
-					height: 100vh;
-					display: flex;
-					flex-direction: column;
-				}
-				.loading {
-					display: flex;
-					justify-content: center;
-					align-items: center;
-					height: 100vh;
-					font-size: 1.2em;
-				}
-			</style>
-		</head>
-		<body>
-			<div id="root">
-				<div class="loading">Loading...</div>
-			</div>
-			<script nonce="${nonce}">
-				try {
-					window.vscode = acquireVsCodeApi();
-				} catch (error) {
-					console.error('Failed to acquire VS Code API:', error);
-				}
+    constructor(private readonly _extensionUri: vscode.Uri) {}
 
-				window.addEventListener('error', (event) => {
-					console.error('Script error:', event.error);
-				});
-
-				console.log = function(...args) {
-					window.vscode.postMessage({
-						type: 'log',
-						message: args.join(' ')
-					});
-				};
-
-				console.error = function(...args) {
-					window.vscode.postMessage({
-						type: 'error',
-						message: args.join(' ')
-					});
-				};
-
-				window.process = {
-					env: {
-						NODE_ENV: 'development'
-					}
-				};
-			</script>
-			<script nonce="${nonce}" src="${scriptUri}" type="text/javascript"></script>
-		</body>
-		</html>`;
-
-    return html;
-}
-
-function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    public get currentView(): vscode.WebviewView | undefined {
+        return this._view;
     }
-    return text;
+
+    public resolveWebviewView(
+        webviewView: vscode.WebviewView,
+        context: vscode.WebviewViewResolveContext,
+        _token: vscode.CancellationToken
+    ) {
+        this._view = webviewView;
+
+        webviewView.webview.options = {
+            enableScripts: true,
+            localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist')],
+        };
+
+        // Set title
+        webviewView.title = 'Chat';
+        webviewView.description = '';
+
+        const scriptUri = webviewView.webview.asWebviewUri(
+            vscode.Uri.joinPath(this._extensionUri, 'dist', 'webview.js')
+        );
+
+        webviewView.webview.html = `<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webviewView.webview.cspSource}; script-src 'unsafe-eval' ${webviewView.webview.cspSource}; connect-src ${webviewView.webview.cspSource}; img-src ${webviewView.webview.cspSource} https:">
+                <title>AI Assistant</title>
+                <style>
+                    html, body {
+                        height: 100vh;
+                        padding: 0;
+                        margin: 0;
+                        background-color: var(--vscode-editor-background);
+                        color: var(--vscode-editor-foreground);
+                    }
+                    #root {
+                        height: 100vh;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .loading {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        font-size: 1.2em;
+                    }
+                </style>
+            </head>
+            <body>
+                <div id="root">
+                    <div class="loading">Loading...</div>
+                </div>
+                <script>
+                    window.process = {
+                        env: {
+                            NODE_ENV: 'development'
+                        }
+                    };
+                </script>
+                <script src="${scriptUri}"></script>
+            </body>
+            </html>`;
+
+        // Enable webview logging and message handling
+        webviewView.webview.onDidReceiveMessage((message) => {
+            console.log('Received message from webview:', message);
+            switch (message.type) {
+                case 'log':
+                    console.log('Webview:', message.message);
+                    break;
+                case 'error':
+                    console.error('Webview Error:', message.message);
+                    break;
+            }
+        });
+    }
+
+    private _getNonce() {
+        let text = '';
+        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        for (let i = 0; i < 32; i++) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    }
 }
 
 // This method is called when your extension is deactivated

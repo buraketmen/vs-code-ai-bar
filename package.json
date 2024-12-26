@@ -17,37 +17,62 @@
     "activationEvents": [],
     "main": "./dist/extension.js",
     "contributes": {
-        "commands": [
-            {
-                "command": "ai-bar.showPanel",
-                "title": "Show AI Assistant"
-            }
-        ],
-        "keybindings": [
-            {
-                "command": "ai-bar.showPanel",
-                "key": "ctrl+shift+j",
-                "mac": "cmd+shift+j"
-            }
-        ],
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "ai-bar-container",
+                    "id": "ai-bar",
                     "title": "AI Assistant",
                     "icon": "$(robot)"
                 }
             ]
         },
         "views": {
-            "ai-bar-container": [
+            "ai-bar": [
                 {
+                    "type": "webview",
                     "id": "ai-bar-view",
-                    "name": "AI Assistant View",
-                    "type": "webview"
+                    "name": "Chat"
                 }
             ]
-        }
+        },
+        "commands": [
+            {
+                "command": "ai-bar.focus",
+                "title": "Focus AI Assistant",
+                "icon": "$(robot)"
+            },
+            {
+                "command": "ai-bar.newChat",
+                "title": "New Chat",
+                "icon": "$(add)"
+            },
+            {
+                "command": "ai-bar.toggleHistory",
+                "title": "Toggle Chat History",
+                "icon": "$(history)"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "ai-bar.newChat",
+                    "when": "view == ai-bar-view",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "ai-bar.toggleHistory",
+                    "when": "view == ai-bar-view",
+                    "group": "navigation@2"
+                }
+            ]
+        },
+        "keybindings": [
+            {
+                "command": "ai-bar.focus",
+                "key": "ctrl+shift+j",
+                "mac": "cmd+shift+j"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
@@ -86,7 +111,6 @@
         "ts-loader": "^9.5.1",
         "typescript": "^5.7.2",
         "webpack": "^5.95.0",
-        "webpack-cli": "^5.1.4",
-        "yo": "^5.1.0"
+        "webpack-cli": "^5.1.4"
     }
 }

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Message } from '../types';
+import { Message } from '../../types';
 import { MessageBubble } from './message-bubble';
 import { TypingIndicator } from './typing-indicator';
 
@@ -15,7 +15,7 @@ const MessageListComponent: React.FC<MessageListProps> = ({
     messagesEndRef,
 }) => {
     return (
-        <div className="flex-1 space-y-4 p-4">
+        <div className="flex-1 space-y-4 p-2">
             {messages.map((message, index) => (
                 <MessageBubble key={index} message={message} />
             ))}

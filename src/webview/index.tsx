@@ -1,7 +1,26 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { ChatProvider } from './contexts/chat-context';
 import './styles.css';
+
+declare global {
+    function acquireVsCodeApi(): {
+        postMessage(message: any): void;
+        setState(state: any): void;
+        getState(): any;
+    };
+    interface Window {
+        vscode: {
+            postMessage(message: any): void;
+            setState(state: any): void;
+            getState(): any;
+        };
+    }
+}
+
+// Initialize VS Code API once and make it globally available
+window.vscode = acquireVsCodeApi();
 
 function initReact() {
     try {
@@ -15,11 +34,11 @@ function initReact() {
 
         const root = createRoot(container);
         root.render(
-            React.createElement(
-                React.StrictMode,
-                null,
-                React.createElement('div', { style: {} }, React.createElement(App, null))
-            )
+            <React.StrictMode>
+                <ChatProvider>
+                    <App />
+                </ChatProvider>
+            </React.StrictMode>
         );
     } catch (error) {
         console.error('Failed to initialize React:', error);
