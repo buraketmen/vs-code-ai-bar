@@ -1,5 +1,6 @@
 import { ClaudeModel } from '../types';
-import { AICommand, AIConfig, AIResponse, BaseAI, CommandPrompt } from './base-ai';
+import { BaseAI } from './base-ai';
+import { AIConfig, AIResponse } from './types';
 
 interface ClaudeConfig extends AIConfig {
     model?: ClaudeModel;
@@ -11,78 +12,6 @@ export class Claude extends BaseAI {
             model: 'claude-3-sonnet-20240229',
             ...config,
         });
-    }
-
-    protected initializeCommandPrompts(): Map<AICommand, CommandPrompt> {
-        const prompts = new Map<AICommand, CommandPrompt>();
-
-        prompts.set(AICommand.OPTIMIZE_CODE, {
-            command: AICommand.OPTIMIZE_CODE,
-            systemPrompt:
-                'You are Claude, an expert code optimizer. Your task is to analyze code and suggest optimizations for better performance, readability, and maintainability.',
-            userPromptTemplate:
-                'Please optimize the following code:\n\n{code}\n\nFocus on: {focus}',
-        });
-
-        prompts.set(AICommand.SECURITY_CHECK, {
-            command: AICommand.SECURITY_CHECK,
-            systemPrompt:
-                'You are Claude, a security expert. Your task is to analyze code for potential security vulnerabilities and suggest improvements.',
-            userPromptTemplate: 'Please perform a security check on the following code:\n\n{code}',
-        });
-
-        prompts.set(AICommand.TEST_COVERAGE, {
-            command: AICommand.TEST_COVERAGE,
-            systemPrompt:
-                'You are Claude, a testing expert. Your task is to analyze code and its test files to evaluate test coverage and suggest improvements.',
-            userPromptTemplate:
-                'Please analyze the test coverage for:\nMain code:\n{code}\n\nTest files:\n{testFiles}',
-        });
-
-        prompts.set(AICommand.EXPLAIN_CODE, {
-            command: AICommand.EXPLAIN_CODE,
-            systemPrompt:
-                'You are Claude, a code explanation expert. Your task is to break down code and explain its functionality in a clear and concise manner.',
-            userPromptTemplate: 'Please explain the following code:\n\n{code}',
-        });
-
-        prompts.set(AICommand.REFACTOR_CODE, {
-            command: AICommand.REFACTOR_CODE,
-            systemPrompt:
-                'You are Claude, a refactoring expert. Your task is to analyze code and suggest structural improvements while maintaining functionality.',
-            userPromptTemplate:
-                'Please suggest refactoring for the following code:\n\n{code}\n\nFocus on: {focus}',
-        });
-
-        prompts.set(AICommand.ADD_TYPES, {
-            command: AICommand.ADD_TYPES,
-            systemPrompt:
-                'You are Claude, a TypeScript expert. Your task is to add appropriate type annotations to improve type safety.',
-            userPromptTemplate: 'Please add type annotations to the following code:\n\n{code}',
-        });
-
-        prompts.set(AICommand.ADD_DOCUMENTATION, {
-            command: AICommand.ADD_DOCUMENTATION,
-            systemPrompt:
-                'You are Claude, a documentation expert. Your task is to add clear and comprehensive documentation to the code.',
-            userPromptTemplate: 'Please add documentation to the following code:\n\n{code}',
-        });
-
-        prompts.set(AICommand.FIX_BUGS, {
-            command: AICommand.FIX_BUGS,
-            systemPrompt:
-                'You are Claude, a debugging expert. Your task is to identify and fix potential bugs in the code.',
-            userPromptTemplate: 'Please identify and fix bugs in the following code:\n\n{code}',
-        });
-
-        prompts.set(AICommand.SUGGEST_IMPROVEMENTS, {
-            command: AICommand.SUGGEST_IMPROVEMENTS,
-            systemPrompt:
-                'You are Claude, a code improvement expert. Your task is to suggest ways to enhance code quality, performance, and user experience.',
-            userPromptTemplate: 'Please suggest improvements for the following code:\n\n{code}',
-        });
-
-        return prompts;
     }
 
     async sendMessage(message: string, context: string[] = []): Promise<AIResponse> {

@@ -1,36 +1,5 @@
-export interface AIConfig {
-    apiKey?: string;
-    model?: string;
-    temperature?: number;
-    maxTokens?: number;
-}
-
-export interface AIResponse {
-    text: string;
-    usage?: {
-        promptTokens: number;
-        completionTokens: number;
-        totalTokens: number;
-    };
-}
-
-export enum AICommand {
-    OPTIMIZE_CODE = 'optimize_code',
-    SECURITY_CHECK = 'security_check',
-    TEST_COVERAGE = 'test_coverage',
-    EXPLAIN_CODE = 'explain_code',
-    REFACTOR_CODE = 'refactor_code',
-    ADD_TYPES = 'add_types',
-    ADD_DOCUMENTATION = 'add_documentation',
-    FIX_BUGS = 'fix_bugs',
-    SUGGEST_IMPROVEMENTS = 'suggest_improvements',
-}
-
-export interface CommandPrompt {
-    command: AICommand;
-    systemPrompt: string;
-    userPromptTemplate: string;
-}
+import { getPrompts } from './prompts';
+import { AICommand, AIConfig, AIResponse, CommandParams, CommandPrompt } from './types';
 
 export abstract class BaseAI {
     protected config: AIConfig;
@@ -45,7 +14,9 @@ export abstract class BaseAI {
         this.commandPrompts = this.initializeCommandPrompts();
     }
 
-    protected abstract initializeCommandPrompts(): Map<AICommand, CommandPrompt>;
+    protected initializeCommandPrompts(): Map<AICommand, CommandPrompt> {
+        return getPrompts();
+    }
 
     abstract sendMessage(message: string, context?: string[]): Promise<AIResponse>;
 
@@ -64,13 +35,15 @@ export abstract class BaseAI {
         };
     }
 
-    async executeCommand(command: AICommand, params: Record<string, any>): Promise<AIResponse> {
+    async executeCommand<T extends AICommand>(
+        command: T,
+        params: CommandParams[T]
+    ): Promise<AIResponse> {
         const prompt = this.commandPrompts.get(command);
         if (!prompt) {
             throw new Error(`Command ${command} not supported by ${this.getName()}`);
         }
 
-        // Replace placeholders in the template with actual values
         let userPrompt = prompt.userPromptTemplate;
         Object.entries(params).forEach(([key, value]) => {
             userPrompt = userPrompt.replace(`{${key}}`, value);
