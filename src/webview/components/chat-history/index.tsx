@@ -5,43 +5,42 @@ import { EmptyState } from './empty-state';
 import { SearchInput } from './search-input';
 import { UndoRedoButtons } from './undo-redo';
 
-type ChatHistoryProps = {
-    isOpen: boolean;
-    searchQuery: string;
-    onSearchChange: (query: string) => void;
-    onClose: () => void;
-    popupRef: React.RefObject<HTMLDivElement | null>;
-};
-
-export const ChatHistory: React.FC<ChatHistoryProps> = ({
-    isOpen,
-    searchQuery,
-    onSearchChange,
-    onClose,
-    popupRef,
-}) => {
+export const ChatHistory: React.FC = () => {
     const { currentSessionId, selectSession, renameSession, deleteSession, getGroupedSessions } =
         useChatContext();
-
+    const popupRef = React.useRef<HTMLDivElement>(null);
+    const [isOpen, setIsOpen] = React.useState<boolean>(false);
     const [editingSessionId, setEditingSessionId] = React.useState<string | null>(null);
-    const [editTitle, setEditTitle] = React.useState('');
+    const [editTitle, setEditTitle] = React.useState<string>('');
+    const [searchQuery, setSearchQuery] = React.useState<string>('');
 
-    // Handle click outside
+    // Listen for messages from extension
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
-                onClose();
+                setIsOpen(false);
             }
         };
 
+        const toggleHistoryHandler = (event: MessageEvent) => {
+            const message = event.data;
+            switch (message.type) {
+                case 'toggleHistory':
+                    setIsOpen((prev) => !prev);
+                    break;
+            }
+        };
+
+        window.addEventListener('message', toggleHistoryHandler);
         if (isOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
         return () => {
+            window.removeEventListener('message', toggleHistoryHandler);
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isOpen, onClose, popupRef]);
+    }, [isOpen, popupRef]);
 
     if (!isOpen) return null;
 
@@ -59,7 +58,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                 </div>
 
                 <div className="flex justify-center p-1">
-                    <SearchInput value={searchQuery} onChange={onSearchChange} />
+                    <SearchInput value={searchQuery} onChange={setSearchQuery} />
                 </div>
 
                 <div className="mt-1 max-h-[250px] overflow-y-auto pt-1">
@@ -74,7 +73,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                                 editTitle={editTitle}
                                 onSelectSession={(id) => {
                                     selectSession(id);
-                                    onClose();
+                                    setIsOpen(false);
                                 }}
                                 onRenameSession={renameSession}
                                 onDeleteSession={deleteSession}

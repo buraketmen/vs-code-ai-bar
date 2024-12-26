@@ -1,21 +1,14 @@
 import * as React from 'react';
+import { useChatContext } from '../../contexts/chat-context';
+import { useModelContext } from '../../contexts/model-context';
 import ModelSelect from '../model-select';
 
-interface MessageInputProps {
-    inputText: string;
-    isTyping: boolean;
-    onInputChange: (text: string) => void;
-    onSubmit: (text: string) => void;
-}
-
-const MessageInputComponent: React.FC<MessageInputProps> = ({
-    inputText,
-    isTyping,
-    onInputChange,
-    onSubmit,
-}) => {
+const MessageInputComponent: React.FC = () => {
+    const { selectedModel } = useModelContext();
+    const { isTyping, sendMessage } = useChatContext();
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-    const [isFocused, setIsFocused] = React.useState(false);
+    const [isFocused, setIsFocused] = React.useState<boolean>(false);
+    const [inputText, setInputText] = React.useState<string>('');
 
     React.useEffect(() => {
         if (textareaRef.current) {
@@ -28,7 +21,8 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (inputText.trim() && !isTyping) {
-            onSubmit(inputText);
+            sendMessage(inputText, selectedModel);
+            setInputText('');
         }
     };
 
@@ -43,7 +37,7 @@ const MessageInputComponent: React.FC<MessageInputProps> = ({
                     <textarea
                         ref={textareaRef}
                         value={inputText}
-                        onChange={(e) => onInputChange(e.target.value)}
+                        onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();

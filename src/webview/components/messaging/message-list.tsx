@@ -1,16 +1,13 @@
 import * as React from 'react';
-import { Message } from '../../types';
+import { useChatContext } from '../../contexts/chat-context';
 import { AIMessage } from './ai-message';
 import { EmptyMessage } from './empty-message';
 import { UserMessage } from './user-message';
 
-type MessageListProps = {
-    messages: Message[];
-    isTyping: boolean;
-};
-
-export const MessageList: React.FC<MessageListProps> = ({ messages, isTyping }) => {
+export const MessageList: React.FC = () => {
+    const { currentSession, isTyping } = useChatContext();
     const messagesEndRef = React.useRef<HTMLDivElement>(null);
+    const messages = currentSession?.messages || [];
 
     React.useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
