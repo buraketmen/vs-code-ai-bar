@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
-import { ChatProvider } from './contexts/chat-context';
+import { ChatProvider, useChatContext } from './contexts/chat-context';
 import './styles.css';
 
 declare global {
@@ -19,39 +19,39 @@ declare global {
     }
 }
 
-// Initialize VS Code API once and make it globally available
-window.vscode = acquireVsCodeApi();
+// Initialize VS Code API
+const vscode = acquireVsCodeApi();
+window.vscode = vscode;
 
-function initReact() {
-    try {
-        const container = document.getElementById('root');
-        if (!container) {
-            throw new Error('Root container not found!');
-        }
+const UndoRedoHandler: React.FC = () => {
+    const { canUndo, canRedo, undoDelete, redoDelete } = useChatContext();
 
-        // Remove loading message
-        container.innerHTML = '';
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+                if (e.shiftKey && canRedo) {
+                    e.preventDefault();
+                    redoDelete();
+                } else if (canUndo) {
+                    e.preventDefault();
+                    undoDelete();
+                }
+            }
+        };
 
-        const root = createRoot(container);
-        root.render(
-            <React.StrictMode>
-                <ChatProvider>
-                    <App />
-                </ChatProvider>
-            </React.StrictMode>
-        );
-    } catch (error) {
-        console.error('Failed to initialize React:', error);
-        const errorDiv = document.createElement('div');
-        errorDiv.style.color = 'red';
-        errorDiv.style.padding = '20px';
-        errorDiv.innerHTML = `<h2>Error</h2><pre>${error instanceof Error ? error.message : 'Unknown error'}</pre>`;
-        document.body.appendChild(errorDiv);
-    }
-}
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [canUndo, canRedo, undoDelete, redoDelete]);
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initReact);
-} else {
-    initReact();
-}
+    return null;
+};
+
+const container = document.getElementById('root');
+const root = createRoot(container!);
+
+root.render(
+    <ChatProvider>
+        <UndoRedoHandler />
+        <App />
+    </ChatProvider>
+);

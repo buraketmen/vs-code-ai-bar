@@ -30,7 +30,7 @@ export const ChatGroup: React.FC<ChatGroupProps> = ({
     onEditChange,
 }) => (
     <div>
-        <div className="mb-1 mt-2 px-2 text-[10px] font-medium uppercase opacity-50">{title}</div>
+        <div className="mb-1 mt-2 text-[10px] font-medium opacity-50">{title}</div>
         {sessions.map((session) => (
             <ChatItem
                 key={session.id}

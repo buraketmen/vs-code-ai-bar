@@ -14,6 +14,10 @@ type ChatContextType = {
     renameSession: (sessionId: string, newTitle: string) => void;
     deleteSession: (sessionId: string) => void;
     getGroupedSessions: (searchQuery: string) => { [key in TimeGroup]?: ChatSession[] };
+    canUndo: boolean;
+    canRedo: boolean;
+    undoDelete: () => void;
+    redoDelete: () => void;
 };
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -36,14 +40,12 @@ const createNewSession = (firstMessage?: string): ChatSession => ({
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [chatState, setChatState] = useState<ChatState>(() => {
-        // Try to load saved state
         const savedState = window.vscode.getState() as ChatState | undefined;
 
         if (savedState && savedState.sessions && savedState.sessions.length > 0) {
             return savedState;
         }
 
-        // If no saved state, create initial session
         const initialSession = createNewSession();
         return {
             sessions: [initialSession],
@@ -52,6 +54,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     const [isTyping, setIsTyping] = useState(false);
+    const [deletedSessions, setDeletedSessions] = useState<ChatSession[]>([]);
+    const [redoStack, setRedoStack] = useState<ChatSession[]>([]);
 
     // Save state whenever it changes
     useEffect(() => {
@@ -88,7 +92,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 timestamp: new Date().toLocaleTimeString(),
             };
 
-            // If this is the first user message, update the session title
             const session = chatState.sessions.find((s) => s.id === chatState.currentSessionId);
             if (session && session.messages.length === 1) {
                 updateSession(chatState.currentSessionId, (s) => ({
@@ -105,7 +108,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setIsTyping(true);
 
-            // Simulated AI response
             setTimeout(() => {
                 const aiResponse: Message = {
                     text: 'This is a sample response. Real AI integration will be added later.',
@@ -144,17 +146,63 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         (sessionId: string) => {
             if (sessionId === chatState.currentSessionId) return;
 
+            const sessionToDelete = chatState.sessions.find((s) => s.id === sessionId);
+            if (sessionToDelete) {
+                setDeletedSessions((prev) => [...prev, sessionToDelete]);
+                setRedoStack([]);
+            }
+
             setChatState((prev) => ({
                 ...prev,
                 sessions: prev.sessions.filter((s) => s.id !== sessionId),
             }));
         },
-        [chatState.currentSessionId]
+        [chatState.currentSessionId, chatState.sessions]
     );
+
+    const undoDelete = useCallback(() => {
+        const lastDeleted = deletedSessions[deletedSessions.length - 1];
+        if (lastDeleted) {
+            setDeletedSessions((prev) => prev.slice(0, -1));
+            setRedoStack((prev) => [...prev, lastDeleted]);
+            setChatState((prev) => ({
+                ...prev,
+                sessions: [...prev.sessions, lastDeleted],
+                currentSessionId: prev.currentSessionId || lastDeleted.id,
+            }));
+        }
+    }, [deletedSessions]);
+
+    const redoDelete = useCallback(() => {
+        const lastRedo = redoStack[redoStack.length - 1];
+        if (lastRedo) {
+            setRedoStack((prev) => prev.slice(0, -1));
+            setDeletedSessions((prev) => [...prev, lastRedo]);
+            setChatState((prev) => {
+                const newSessions = prev.sessions.filter((s) => s.id !== lastRedo.id);
+                const newCurrentSessionId =
+                    prev.currentSessionId === lastRedo.id
+                        ? newSessions.length > 0
+                            ? newSessions.reduce((latest, session) => {
+                                  return new Date(session.lastUpdatedAt).getTime() >
+                                      new Date(latest.lastUpdatedAt).getTime()
+                                      ? session
+                                      : latest;
+                              }).id
+                            : null
+                        : prev.currentSessionId;
+
+                return {
+                    ...prev,
+                    sessions: newSessions,
+                    currentSessionId: newCurrentSessionId,
+                };
+            });
+        }
+    }, [redoStack]);
 
     const getGroupedSessions = useCallback(
         (searchQuery: string) => {
-            // Filter sessions based on search query
             let filtered = chatState.sessions;
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase();
@@ -165,7 +213,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 );
             }
 
-            // Group by time period
             const groups = filtered.reduce(
                 (groups, session) => {
                     const group = getTimeGroup(session.lastUpdatedAt);
@@ -178,7 +225,6 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 {} as { [key in TimeGroup]?: ChatSession[] }
             );
 
-            // Sort sessions within each group
             Object.values(groups).forEach((sessions) => {
                 if (sessions) {
                     sessions.sort(
@@ -205,6 +251,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         renameSession,
         deleteSession,
         getGroupedSessions,
+        canUndo: deletedSessions.length > 0,
+        canRedo: redoStack.length > 0,
+        undoDelete,
+        redoDelete,
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

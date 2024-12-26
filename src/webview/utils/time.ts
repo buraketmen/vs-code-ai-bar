@@ -1,11 +1,11 @@
 export enum TimeGroup {
-    LAST_5_MIN = 'Just Now',
-    LAST_15_MIN = 'Last 15 Minutes',
-    LAST_HOUR = 'Last Hour',
-    LAST_3_HOURS = 'Last 3 Hours',
-    LAST_24_HOURS = 'Last 24 Hours',
-    LAST_WEEK = 'Last Week',
-    LAST_MONTH = 'Last Month',
+    LAST_5_MIN = 'Just now',
+    LAST_15_MIN = 'Last 15 minutes',
+    LAST_HOUR = 'Last hour',
+    LAST_3_HOURS = 'Last 3 hours',
+    LAST_24_HOURS = 'Last 24 hours',
+    LAST_WEEK = 'Last week',
+    LAST_MONTH = 'Last month',
     OLDER = 'Older',
 }
 

@@ -4,6 +4,7 @@ import { TIME_GROUP_ORDER, TimeGroup } from '../../utils/time';
 import { ChatGroup } from './chat-group';
 import { EmptyState } from './empty-state';
 import { SearchInput } from './search-input';
+import { UndoRedoButtons } from './undo-redo';
 
 type ChatHistoryProps = {
     isOpen: boolean;
@@ -53,6 +54,11 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
                 ref={popupRef}
                 className="border-vscode-border bg-vscode-bg-secondary ml-auto w-full max-w-[500px] overflow-hidden rounded border p-2 shadow-lg"
             >
+                <div className="flex items-center justify-between p-1">
+                    <div className="text-sm font-medium opacity-100">Chats</div>
+                    <UndoRedoButtons />
+                </div>
+
                 <div className="flex justify-center p-1">
                     <SearchInput value={searchQuery} onChange={onSearchChange} />
                 </div>
