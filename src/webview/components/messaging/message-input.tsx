@@ -2,10 +2,11 @@ import * as React from 'react';
 import { useChatContext } from '../../contexts/chat-context';
 import { useModelContext } from '../../contexts/model-context';
 import ModelSelect from '../model-select';
+import { AICommand } from '../../ai/types';
 
 const MessageInputComponent: React.FC = () => {
     const { selectedModel } = useModelContext();
-    const { isTyping, sendMessage } = useChatContext();
+    const { isTyping, chatWithAI } = useChatContext();
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const [isFocused, setIsFocused] = React.useState<boolean>(false);
     const [inputText, setInputText] = React.useState<string>('');
@@ -21,7 +22,7 @@ const MessageInputComponent: React.FC = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (inputText.trim() && !isTyping) {
-            sendMessage(inputText, selectedModel);
+            chatWithAI(inputText, selectedModel, AICommand.CHAT);
             setInputText('');
         }
     };

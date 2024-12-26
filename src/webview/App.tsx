@@ -21,11 +21,8 @@ export const App: React.FC = () => {
 
         window.addEventListener('message', messageHandler);
 
-        // Send ready message to extension
-        window.vscode.postMessage({ type: 'ready' });
-
         return () => window.removeEventListener('message', messageHandler);
-    }, [createNewChat]);
+    }, []);
 
     return (
         <div className="flex h-screen flex-col bg-vscode-bg">

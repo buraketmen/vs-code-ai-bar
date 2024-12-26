@@ -3,6 +3,8 @@ export interface AIConfig {
     model?: string;
     temperature?: number;
     maxTokens?: number;
+    maxHistoryLength?: number;
+    maxContextMessages?: number;
 }
 
 export interface AIResponse {
@@ -12,6 +14,13 @@ export interface AIResponse {
         completionTokens: number;
         totalTokens: number;
     };
+}
+
+export type Role = 'system' | 'user' | 'assistant';
+
+export interface Message {
+    role: Role;
+    content: string;
 }
 
 export enum AICommand {

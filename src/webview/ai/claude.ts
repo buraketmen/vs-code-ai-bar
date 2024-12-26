@@ -1,6 +1,6 @@
 import { ClaudeModel } from '../types';
 import { BaseAI } from './base-ai';
-import { AIConfig, AIResponse } from './types';
+import { AIConfig, AIResponse, Message } from './types';
 
 interface ClaudeConfig extends AIConfig {
     model?: ClaudeModel;
@@ -14,7 +14,7 @@ export class Claude extends BaseAI {
         });
     }
 
-    async sendMessage(message: string, context: string[] = []): Promise<AIResponse> {
+    async callAPI(messages: Message[]): Promise<AIResponse> {
         if (!this.config.apiKey) {
             throw new Error('Anthropic API key is required');
         }
@@ -28,10 +28,7 @@ export class Claude extends BaseAI {
             },
             body: JSON.stringify({
                 model: this.config.model,
-                messages: [
-                    ...context.map((text) => ({ role: 'assistant', content: text })),
-                    { role: 'user', content: message },
-                ],
+                messages,
                 max_tokens: this.config.maxTokens,
             }),
         });

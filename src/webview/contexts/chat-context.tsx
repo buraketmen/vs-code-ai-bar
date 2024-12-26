@@ -9,6 +9,7 @@ import {
     useState,
 } from 'react';
 import { AIManager } from '../ai/ai-manager';
+import { AICommand } from '../ai/types';
 import { AIModel, ChatSession, ChatState, GroupedSessions, Message } from '../types';
 import { getTimeGroup } from '../utils/time';
 
@@ -21,7 +22,7 @@ interface ChatContextType {
     canRedo: boolean;
     selectSession: (sessionId: string) => void;
     createNewChat: () => void;
-    sendMessage: (text: string, model: AIModel) => void;
+    chatWithAI: (text: string, model: AIModel, command: AICommand) => void;
     renameSession: (sessionId: string, newTitle: string) => void;
     deleteSession: (sessionId: string) => void;
     undoDelete: () => void;
@@ -135,8 +136,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         []
     );
 
-    const sendMessage = useCallback(
-        async (text: string, model: AIModel) => {
+    const chatWithAI = useCallback(
+        async (text: string, model: AIModel, command: AICommand) => {
             if (!text.trim() || !chatState.currentSessionId) return;
 
             const userMessage: Message = {
@@ -164,7 +165,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             try {
                 const aiInstance = aiManager.getModel(model);
-                const response = await aiInstance.sendMessage(text);
+                const response = await aiInstance.executeCommand(command, {
+                    message: text,
+                });
 
                 const aiResponse: Message = {
                     id: (Date.now() + 1).toString(),
@@ -296,7 +299,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             canRedo: redoStack.length > 0,
             selectSession,
             createNewChat,
-            sendMessage,
+            chatWithAI,
             renameSession,
             deleteSession,
             undoDelete,
@@ -311,7 +314,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             redoStack,
             selectSession,
             createNewChat,
-            sendMessage,
+            chatWithAI,
             renameSession,
             deleteSession,
             undoDelete,

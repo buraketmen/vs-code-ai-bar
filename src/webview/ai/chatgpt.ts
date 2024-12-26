@@ -1,6 +1,6 @@
 import { ChatGPTModel } from '../types';
 import { BaseAI } from './base-ai';
-import { AIConfig, AIResponse } from './types';
+import { AIConfig, AIResponse, Message } from './types';
 
 interface ChatGPTConfig extends AIConfig {
     model?: ChatGPTModel;
@@ -14,9 +14,9 @@ export class ChatGPT extends BaseAI {
         });
     }
 
-    async sendMessage(message: string, context: string[] = []): Promise<AIResponse> {
+    async callAPI(messages: Message[]): Promise<AIResponse> {
         if (!this.config.apiKey) {
-            throw new Error('OpenAI API key is required');
+            throw new Error(`OpenAI API key is required.`);
         }
 
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -27,10 +27,7 @@ export class ChatGPT extends BaseAI {
             },
             body: JSON.stringify({
                 model: this.config.model,
-                messages: [
-                    ...context.map((text) => ({ role: 'system' as const, content: text })),
-                    { role: 'user' as const, content: message },
-                ],
+                messages,
                 temperature: this.config.temperature,
                 max_tokens: this.config.maxTokens,
             }),
