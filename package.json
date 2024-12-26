@@ -14,7 +14,14 @@
     "categories": [
         "Other"
     ],
-    "activationEvents": [],
+    "activationEvents": [
+        "onStartupFinished",
+        "onCommand:ai-bar.open",
+        "onCommand:ai-bar.focus",
+        "onCommand:ai-bar.newChat",
+        "onCommand:ai-bar.toggleHistory",
+        "onCommand:ai-bar.openSettings"
+    ],
     "main": "./dist/extension.js",
     "contributes": {
         "viewsContainers": {
@@ -50,6 +57,16 @@
                 "command": "ai-bar.toggleHistory",
                 "title": "Toggle Chat History",
                 "icon": "$(history)"
+            },
+            {
+                "command": "ai-bar.openSettings",
+                "title": "Open Settings",
+                "icon": "$(gear)"
+            },
+            {
+                "command": "ai-bar.open",
+                "title": "Open AI Bar",
+                "category": "AI Bar"
             }
         ],
         "menus": {
@@ -63,16 +80,64 @@
                     "command": "ai-bar.toggleHistory",
                     "when": "view == ai-bar-view",
                     "group": "navigation@2"
+                },
+                {
+                    "command": "ai-bar.openSettings",
+                    "when": "view == ai-bar-view",
+                    "group": "navigation@3"
                 }
             ]
         },
         "keybindings": [
             {
-                "command": "ai-bar.focus",
+                "command": "ai-bar.open",
                 "key": "ctrl+shift+j",
-                "mac": "cmd+shift+j"
+                "mac": "cmd+shift+j",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "ai-bar.openSettings",
+                "key": "ctrl+shift+a",
+                "mac": "cmd+shift+a",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "ai-bar.newChat",
+                "key": "ctrl+shift+k",
+                "mac": "cmd+shift+k",
+                "when": "editorTextFocus"
             }
-        ]
+        ],
+        "configuration": {
+            "title": "AI Bar",
+            "properties": {
+                "aiBar.shortcuts.open": {
+                    "type": "string",
+                    "default": "ctrl+shift+j",
+                    "markdownDescription": "Keyboard shortcut to open AI Bar panel (requires restart)"
+                },
+                "aiBar.shortcuts.openSettings": {
+                    "type": "string",
+                    "default": "ctrl+shift+a",
+                    "markdownDescription": "Keyboard shortcut to open AI Bar settings (requires restart)"
+                },
+                "aiBar.shortcuts.newChat": {
+                    "type": "string",
+                    "default": "ctrl+shift+k",
+                    "markdownDescription": "Keyboard shortcut to start a new chat (requires restart)"
+                },
+                "aiBar.api.openai": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "OpenAI API Key for ChatGPT models. [Get API Key](https://platform.openai.com/api-keys)"
+                },
+                "aiBar.api.anthropic": {
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "Anthropic API Key for Claude models. [Get API Key](https://console.anthropic.com/settings/keys)"
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run package",

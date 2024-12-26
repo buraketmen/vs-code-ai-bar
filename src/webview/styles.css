@@ -58,11 +58,15 @@ body {
 
 /* Form Elements */
 textarea {
-    @apply resize-none border-none outline-none;
+    @apply !resize-none border-none !outline-none;
 }
 
 input {
-    @apply border-vscode-border hover:border-vscode-border-hover focus:border-vscode-border-hover active:border-vscode-border-hover outline-none transition-colors duration-150;
+    @apply border-vscode-border !outline-none transition-colors duration-150 focus-within:border-vscode-border-hover hover:border-vscode-border-hover focus:border-vscode-border-hover active:border-vscode-border-hover;
+}
+
+select {
+    @apply border border-vscode-border !outline-none transition-colors duration-150 focus-within:border-vscode-border-hover hover:border-vscode-border-hover focus:border-vscode-border-hover active:border-vscode-border-hover;
 }
 
 button {

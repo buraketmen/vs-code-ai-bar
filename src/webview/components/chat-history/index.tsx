@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { useChatContext } from '../../contexts/chat-context';
-import { TIME_GROUP_ORDER, TimeGroup } from '../../utils/time';
 import { ChatGroup } from './chat-group';
 import { EmptyState } from './empty-state';
 import { SearchInput } from './search-input';
@@ -52,7 +51,7 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
         <div className="absolute inset-0 p-2">
             <div
                 ref={popupRef}
-                className="border-vscode-border bg-vscode-bg-secondary ml-auto w-full max-w-[500px] overflow-hidden rounded border p-2 shadow-lg"
+                className="ml-auto w-full max-w-[500px] overflow-hidden rounded border border-vscode-border bg-vscode-bg-secondary p-2 shadow-lg"
             >
                 <div className="flex items-center justify-between p-1">
                     <div className="text-sm font-medium opacity-100">Chats</div>
@@ -65,37 +64,31 @@ export const ChatHistory: React.FC<ChatHistoryProps> = ({
 
                 <div className="mt-1 max-h-[250px] overflow-y-auto pt-1">
                     {Object.keys(groupedSessions).length > 0 ? (
-                        Object.entries(groupedSessions)
-                            .sort(
-                                ([groupA], [groupB]) =>
-                                    TIME_GROUP_ORDER[groupA as TimeGroup] -
-                                    TIME_GROUP_ORDER[groupB as TimeGroup]
-                            )
-                            .map(([group, sessions]) => (
-                                <ChatGroup
-                                    key={group}
-                                    title={group}
-                                    sessions={sessions}
-                                    currentSessionId={currentSessionId}
-                                    editingSessionId={editingSessionId}
-                                    editTitle={editTitle}
-                                    onSelectSession={(id) => {
-                                        selectSession(id);
-                                        onClose();
-                                    }}
-                                    onRenameSession={renameSession}
-                                    onDeleteSession={deleteSession}
-                                    onEditStart={(sessionId, currentTitle) => {
-                                        setEditingSessionId(sessionId);
-                                        setEditTitle(currentTitle);
-                                    }}
-                                    onEditEnd={() => {
-                                        setEditingSessionId(null);
-                                        setEditTitle('');
-                                    }}
-                                    onEditChange={setEditTitle}
-                                />
-                            ))
+                        Object.entries(groupedSessions).map(([group, sessions]) => (
+                            <ChatGroup
+                                key={group}
+                                title={group}
+                                sessions={sessions}
+                                currentSessionId={currentSessionId}
+                                editingSessionId={editingSessionId}
+                                editTitle={editTitle}
+                                onSelectSession={(id) => {
+                                    selectSession(id);
+                                    onClose();
+                                }}
+                                onRenameSession={renameSession}
+                                onDeleteSession={deleteSession}
+                                onEditStart={(sessionId, currentTitle) => {
+                                    setEditingSessionId(sessionId);
+                                    setEditTitle(currentTitle);
+                                }}
+                                onEditEnd={() => {
+                                    setEditingSessionId(null);
+                                    setEditTitle('');
+                                }}
+                                onEditChange={setEditTitle}
+                            />
+                        ))
                     ) : (
                         <EmptyState searchQuery={searchQuery} />
                     )}

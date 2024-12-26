@@ -20,14 +20,14 @@ export const TIME_THRESHOLDS = {
 } as const;
 
 export const TIME_GROUP_ORDER: { [key in TimeGroup]: number } = {
-    [TimeGroup.LAST_5_MIN]: 0,
-    [TimeGroup.LAST_15_MIN]: 1,
-    [TimeGroup.LAST_HOUR]: 2,
-    [TimeGroup.LAST_3_HOURS]: 3,
-    [TimeGroup.LAST_24_HOURS]: 4,
-    [TimeGroup.LAST_WEEK]: 5,
-    [TimeGroup.LAST_MONTH]: 6,
-    [TimeGroup.OLDER]: 7,
+    [TimeGroup.OLDER]: 0,
+    [TimeGroup.LAST_MONTH]: 1,
+    [TimeGroup.LAST_WEEK]: 2,
+    [TimeGroup.LAST_24_HOURS]: 3,
+    [TimeGroup.LAST_3_HOURS]: 4,
+    [TimeGroup.LAST_HOUR]: 5,
+    [TimeGroup.LAST_15_MIN]: 6,
+    [TimeGroup.LAST_5_MIN]: 7,
 };
 
 export type GroupedSessions<T> = {

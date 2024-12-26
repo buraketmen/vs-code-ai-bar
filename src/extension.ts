@@ -50,7 +50,35 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    context.subscriptions.push(focusDisposable, toggleHistoryDisposable, newChatDisposable);
+    // Register open command
+    let openDisposable = vscode.commands.registerCommand('ai-bar.open', async () => {
+        try {
+            // First, show the view container
+            await vscode.commands.executeCommand('workbench.view.extension.ai-bar');
+            // Then focus the view
+            await vscode.commands.executeCommand('ai-bar-view.focus');
+            // Finally, focus the webview
+            if (provider.currentView) {
+                provider.currentView.show(true);
+            }
+        } catch (error) {
+            console.error('Error opening AI Bar:', error);
+        }
+    });
+
+    // Register openSettings command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('ai-bar.openSettings', () => {
+            vscode.commands.executeCommand('workbench.action.openSettings', '@ext:ai-bar.ai-bar');
+        })
+    );
+
+    context.subscriptions.push(
+        focusDisposable,
+        toggleHistoryDisposable,
+        newChatDisposable,
+        openDisposable
+    );
 }
 
 class AIAssistantViewProvider implements vscode.WebviewViewProvider {

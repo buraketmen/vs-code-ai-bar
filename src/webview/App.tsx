@@ -4,6 +4,7 @@ import { ChatHistory } from './components/chat-history';
 import { MessageInput } from './components/messaging/message-input';
 import { MessageList } from './components/messaging/message-list';
 import { useChatContext } from './contexts/chat-context';
+import { AIModel } from './types';
 
 export const App: React.FC = () => {
     const { currentSession, isTyping, sendMessage, createNewChat } = useChatContext();
@@ -11,8 +12,17 @@ export const App: React.FC = () => {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [inputText, setInputText] = useState('');
+    const [selectedModel, setSelectedModel] = useState<AIModel>('gpt-3.5-turbo');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const popupRef = useRef<HTMLDivElement>(null);
+
+    // Load saved model preference
+    useEffect(() => {
+        const savedModel = localStorage.getItem('selectedModel');
+        if (savedModel) {
+            setSelectedModel(savedModel as AIModel);
+        }
+    }, []);
 
     const handleCloseHistory = useCallback(() => {
         setIsHistoryOpen(false);
@@ -22,15 +32,20 @@ export const App: React.FC = () => {
         setInputText(text);
     }, []);
 
+    const handleModelChange = useCallback((model: AIModel) => {
+        setSelectedModel(model);
+        localStorage.setItem('selectedModel', model);
+    }, []);
+
     const handleSubmit = useCallback(
         async (e: React.FormEvent) => {
             e.preventDefault();
             if (!inputText.trim()) return;
 
-            sendMessage(inputText);
+            sendMessage(inputText, selectedModel);
             setInputText('');
         },
-        [inputText, sendMessage]
+        [inputText, selectedModel, sendMessage]
     );
 
     // Listen for messages from extension
@@ -64,23 +79,19 @@ export const App: React.FC = () => {
     }, [currentSession?.messages, scrollToBottom]);
 
     return (
-        <div className="bg-vscode-bg flex h-screen">
-            <div className="flex flex-1 flex-col">
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                    <MessageList
-                        messages={currentSession?.messages || []}
-                        isTyping={isTyping}
-                        messagesEndRef={messagesEndRef}
-                    />
-                </div>
-                <div className="border-vscode-border flex-none border-t p-2">
-                    <MessageInput
-                        inputText={inputText}
-                        isTyping={isTyping}
-                        onInputChange={handleInputChange}
-                        onSubmit={handleSubmit}
-                    />
-                </div>
+        <div className="flex h-screen flex-col bg-vscode-bg">
+            <div className="min-h-0 flex-1 overflow-y-auto">
+                <MessageList messages={currentSession?.messages || []} isTyping={isTyping} />
+            </div>
+            <div className="flex-none border-t border-vscode-border p-2">
+                <MessageInput
+                    inputText={inputText}
+                    isTyping={isTyping}
+                    onInputChange={setInputText}
+                    onSubmit={handleSubmit}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                />
             </div>
             <ChatHistory
                 isOpen={isHistoryOpen}

@@ -1,28 +1,35 @@
 import * as React from 'react';
 import { Message } from '../../types';
-import { MessageBubble } from './message-bubble';
-import { TypingIndicator } from './typing-indicator';
+import { AIMessage } from './ai-message';
+import { EmptyMessage } from './empty-message';
+import { UserMessage } from './user-message';
 
-interface MessageListProps {
+type MessageListProps = {
     messages: Message[];
     isTyping: boolean;
-    messagesEndRef: React.RefObject<HTMLDivElement | null>;
-}
+};
 
-const MessageListComponent: React.FC<MessageListProps> = ({
-    messages,
-    isTyping,
-    messagesEndRef,
-}) => {
+export const MessageList: React.FC<MessageListProps> = ({ messages, isTyping }) => {
+    const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, isTyping]);
+
+    if (messages.length === 0) {
+        return <EmptyMessage />;
+    }
+
     return (
-        <div className="flex-1 space-y-4 p-2">
-            {messages.map((message, index) => (
-                <MessageBubble key={index} message={message} />
-            ))}
-            {isTyping && <TypingIndicator />}
+        <div className="flex flex-col gap-4 p-4">
+            {messages.map((message, index) =>
+                message.role === 'user' ? (
+                    <UserMessage key={index} message={message} />
+                ) : (
+                    <AIMessage key={index} message={message} />
+                )
+            )}
             <div ref={messagesEndRef} />
         </div>
     );
 };
-
-export const MessageList = React.memo(MessageListComponent);

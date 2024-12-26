@@ -1,94 +1,163 @@
 import * as React from 'react';
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { ChatSession, ChatState, Message } from '../types';
-import { getTimeGroup, TimeGroup } from '../utils/time';
+import { createContext, useCallback, useContext, useEffect, useReducer, useState } from 'react';
+import { AIManager } from '../ai/ai-manager';
+import { AIModel, ChatSession, ChatState, GroupedSessions, Message, TimeGroup } from '../types';
 
-type ChatContextType = {
+interface ChatContextType {
     sessions: ChatSession[];
-    currentSession: ChatSession | undefined;
+    currentSession: ChatSession | null;
     currentSessionId: string | null;
     isTyping: boolean;
-    createNewChat: () => void;
-    sendMessage: (text: string) => void;
-    selectSession: (sessionId: string) => void;
-    renameSession: (sessionId: string, newTitle: string) => void;
-    deleteSession: (sessionId: string) => void;
-    getGroupedSessions: (searchQuery: string) => { [key in TimeGroup]?: ChatSession[] };
     canUndo: boolean;
     canRedo: boolean;
+    selectSession: (sessionId: string) => void;
+    createNewChat: () => void;
+    sendMessage: (text: string, model: AIModel) => void;
+    renameSession: (sessionId: string, newTitle: string) => void;
+    deleteSession: (sessionId: string) => void;
     undoDelete: () => void;
     redoDelete: () => void;
-};
+    getGroupedSessions: (searchQuery: string) => GroupedSessions;
+}
 
 const ChatContext = createContext<ChatContextType | null>(null);
 
-const generateId = () => Math.random().toString(36).substring(2, 15);
+export const useChatContext = () => {
+    const context = useContext(ChatContext);
+    if (!context) {
+        throw new Error('useChatContext must be used within a ChatProvider');
+    }
+    return context;
+};
 
-const createNewSession = (firstMessage?: string): ChatSession => ({
-    id: generateId(),
-    title: firstMessage ? `${firstMessage.slice(0, 20)}...` : 'New Chat',
-    messages: [
-        {
-            text: 'Hello! I am your VS Code AI assistant. How can I help you today?',
-            sender: 'ai',
-            timestamp: new Date().toLocaleTimeString(),
-        },
-    ],
-    createdAt: new Date().toISOString(),
-    lastUpdatedAt: new Date().toISOString(),
-});
+type ChatAction =
+    | { type: 'SET_SESSIONS'; sessions: ChatSession[] }
+    | { type: 'SET_CURRENT_SESSION'; sessionId: string | null }
+    | { type: 'UPDATE_SESSION'; sessionId: string; updater: (session: ChatSession) => ChatSession }
+    | { type: 'DELETE_SESSION'; sessionId: string }
+    | { type: 'RESTORE_SESSION'; session: ChatSession };
+
+function chatReducer(state: ChatState, action: ChatAction): ChatState {
+    switch (action.type) {
+        case 'SET_SESSIONS':
+            return {
+                ...state,
+                sessions: action.sessions,
+            };
+        case 'SET_CURRENT_SESSION':
+            return {
+                ...state,
+                currentSessionId: action.sessionId,
+            };
+        case 'UPDATE_SESSION':
+            return {
+                ...state,
+                sessions: state.sessions.map((session) =>
+                    session.id === action.sessionId ? action.updater(session) : session
+                ),
+            };
+        case 'DELETE_SESSION':
+            return {
+                ...state,
+                sessions: state.sessions.filter((session) => session.id !== action.sessionId),
+            };
+        case 'RESTORE_SESSION':
+            return {
+                ...state,
+                sessions: [...state.sessions, action.session],
+            };
+        default:
+            return state;
+    }
+}
+
+function getTimeGroup(date: string): TimeGroup {
+    const now = new Date();
+    const sessionDate = new Date(date);
+    const diffInMinutes = Math.floor((now.getTime() - sessionDate.getTime()) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 60) {
+        return TimeGroup.JUST_NOW;
+    } else if (diffInHours < 1) {
+        return TimeGroup.LAST_HOUR;
+    } else if (diffInHours < 3) {
+        return TimeGroup.LAST_3_HOURS;
+    } else if (diffInHours < 24) {
+        return TimeGroup.LAST_24_HOURS;
+    } else if (diffInDays < 7) {
+        return TimeGroup.LAST_WEEK;
+    } else if (diffInDays < 30) {
+        return TimeGroup.LAST_MONTH;
+    } else {
+        return TimeGroup.OLDER;
+    }
+}
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [chatState, setChatState] = useState<ChatState>(() => {
-        const savedState = window.vscode.getState() as ChatState | undefined;
-
-        if (savedState && savedState.sessions && savedState.sessions.length > 0) {
-            return savedState;
-        }
-
-        const initialSession = createNewSession();
-        return {
-            sessions: [initialSession],
-            currentSessionId: initialSession.id,
-        };
+    const [chatState, dispatch] = useReducer(chatReducer, {
+        sessions: [],
+        currentSessionId: null,
     });
 
     const [isTyping, setIsTyping] = useState(false);
     const [deletedSessions, setDeletedSessions] = useState<ChatSession[]>([]);
     const [redoStack, setRedoStack] = useState<ChatSession[]>([]);
 
-    // Save state whenever it changes
+    const aiManager = AIManager.getInstance();
+
     useEffect(() => {
-        window.vscode.setState(chatState);
+        // Load saved sessions from VS Code storage
+        const savedState = window.vscode.getState();
+        if (savedState?.sessions) {
+            dispatch({ type: 'SET_SESSIONS', sessions: savedState.sessions });
+            if (savedState.currentSessionId) {
+                dispatch({ type: 'SET_CURRENT_SESSION', sessionId: savedState.currentSessionId });
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        // Save sessions to VS Code storage
+        window.vscode.setState({
+            sessions: chatState.sessions,
+            currentSessionId: chatState.currentSessionId,
+        });
     }, [chatState]);
 
-    const currentSession = chatState.sessions.find((s) => s.id === chatState.currentSessionId);
+    const selectSession = useCallback((sessionId: string) => {
+        dispatch({ type: 'SET_CURRENT_SESSION', sessionId });
+    }, []);
+
+    const createNewChat = useCallback(() => {
+        const newSession: ChatSession = {
+            id: Date.now().toString(),
+            title: 'New Chat',
+            messages: [],
+            createdAt: new Date().toISOString(),
+            lastUpdatedAt: new Date().toISOString(),
+        };
+
+        dispatch({ type: 'SET_SESSIONS', sessions: [...chatState.sessions, newSession] });
+        dispatch({ type: 'SET_CURRENT_SESSION', sessionId: newSession.id });
+    }, [chatState.sessions]);
 
     const updateSession = useCallback(
         (sessionId: string, updater: (session: ChatSession) => ChatSession) => {
-            setChatState((prev) => ({
-                ...prev,
-                sessions: prev.sessions.map((s) => (s.id === sessionId ? updater(s) : s)),
-            }));
+            dispatch({ type: 'UPDATE_SESSION', sessionId, updater });
         },
         []
     );
 
-    const createNewChat = useCallback(() => {
-        const newSession = createNewSession();
-        setChatState((prev) => ({
-            sessions: [...prev.sessions, newSession],
-            currentSessionId: newSession.id,
-        }));
-    }, []);
-
     const sendMessage = useCallback(
-        async (text: string) => {
+        async (text: string, model: AIModel) => {
             if (!text.trim() || !chatState.currentSessionId) return;
 
             const userMessage: Message = {
+                id: Date.now().toString(),
                 text,
-                sender: 'user',
+                role: 'user',
                 timestamp: new Date().toLocaleTimeString(),
             };
 
@@ -108,29 +177,42 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setIsTyping(true);
 
-            setTimeout(() => {
+            try {
+                const aiInstance = aiManager.getModel(model);
+                const response = await aiInstance.sendMessage(text);
+
                 const aiResponse: Message = {
-                    text: 'This is a sample response. Real AI integration will be added later.',
-                    sender: 'ai',
+                    id: (Date.now() + 1).toString(),
+                    text: response.text,
+                    role: 'assistant',
                     timestamp: new Date().toLocaleTimeString(),
                 };
+
                 updateSession(chatState.currentSessionId!, (s) => ({
                     ...s,
                     messages: [...s.messages, aiResponse],
                     lastUpdatedAt: new Date().toISOString(),
                 }));
-                setIsTyping(false);
-            }, 1500);
-        },
-        [chatState.currentSessionId, chatState.sessions, updateSession]
-    );
+            } catch (error) {
+                const errorMessage: Message = {
+                    id: (Date.now() + 1).toString(),
+                    text: error instanceof Error ? error.message : 'Unknown error occurred!',
+                    role: 'assistant',
+                    timestamp: new Date().toLocaleTimeString(),
+                    isError: true,
+                };
 
-    const selectSession = useCallback((sessionId: string) => {
-        setChatState((prev) => ({
-            ...prev,
-            currentSessionId: sessionId,
-        }));
-    }, []);
+                updateSession(chatState.currentSessionId!, (s) => ({
+                    ...s,
+                    messages: [...s.messages, errorMessage],
+                    lastUpdatedAt: new Date().toISOString(),
+                }));
+            } finally {
+                setIsTyping(false);
+            }
+        },
+        [chatState.currentSessionId, chatState.sessions, updateSession, aiManager]
+    );
 
     const renameSession = useCallback(
         (sessionId: string, newTitle: string) => {
@@ -144,20 +226,26 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const deleteSession = useCallback(
         (sessionId: string) => {
-            if (sessionId === chatState.currentSessionId) return;
-
-            const sessionToDelete = chatState.sessions.find((s) => s.id === sessionId);
-            if (sessionToDelete) {
-                setDeletedSessions((prev) => [...prev, sessionToDelete]);
+            const session = chatState.sessions.find((s) => s.id === sessionId);
+            if (session) {
+                setDeletedSessions((prev) => [...prev, session]);
                 setRedoStack([]);
-            }
+                dispatch({ type: 'DELETE_SESSION', sessionId });
 
-            setChatState((prev) => ({
-                ...prev,
-                sessions: prev.sessions.filter((s) => s.id !== sessionId),
-            }));
+                if (chatState.currentSessionId === sessionId) {
+                    const remainingSessions = chatState.sessions.filter((s) => s.id !== sessionId);
+                    if (remainingSessions.length > 0) {
+                        dispatch({
+                            type: 'SET_CURRENT_SESSION',
+                            sessionId: remainingSessions[remainingSessions.length - 1].id,
+                        });
+                    } else {
+                        dispatch({ type: 'SET_CURRENT_SESSION', sessionId: null });
+                    }
+                }
+            }
         },
-        [chatState.currentSessionId, chatState.sessions]
+        [chatState.sessions, chatState.currentSessionId]
     );
 
     const undoDelete = useCallback(() => {
@@ -165,44 +253,23 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (lastDeleted) {
             setDeletedSessions((prev) => prev.slice(0, -1));
             setRedoStack((prev) => [...prev, lastDeleted]);
-            setChatState((prev) => ({
-                ...prev,
-                sessions: [...prev.sessions, lastDeleted],
-                currentSessionId: prev.currentSessionId || lastDeleted.id,
-            }));
+            dispatch({ type: 'RESTORE_SESSION', session: lastDeleted });
+            dispatch({ type: 'SET_CURRENT_SESSION', sessionId: lastDeleted.id });
         }
     }, [deletedSessions]);
 
     const redoDelete = useCallback(() => {
-        const lastRedo = redoStack[redoStack.length - 1];
-        if (lastRedo) {
+        const lastRestored = redoStack[redoStack.length - 1];
+        if (lastRestored) {
             setRedoStack((prev) => prev.slice(0, -1));
-            setDeletedSessions((prev) => [...prev, lastRedo]);
-            setChatState((prev) => {
-                const newSessions = prev.sessions.filter((s) => s.id !== lastRedo.id);
-                const newCurrentSessionId =
-                    prev.currentSessionId === lastRedo.id
-                        ? newSessions.length > 0
-                            ? newSessions.reduce((latest, session) => {
-                                  return new Date(session.lastUpdatedAt).getTime() >
-                                      new Date(latest.lastUpdatedAt).getTime()
-                                      ? session
-                                      : latest;
-                              }).id
-                            : null
-                        : prev.currentSessionId;
-
-                return {
-                    ...prev,
-                    sessions: newSessions,
-                    currentSessionId: newCurrentSessionId,
-                };
-            });
+            setDeletedSessions((prev) => [...prev, lastRestored]);
+            deleteSession(lastRestored.id);
         }
-    }, [redoStack]);
+    }, [redoStack, deleteSession]);
 
     const getGroupedSessions = useCallback(
-        (searchQuery: string) => {
+        (searchQuery: string): GroupedSessions => {
+            // 1. Filter sessions based on search query
             let filtered = chatState.sessions;
             if (searchQuery.trim()) {
                 const query = searchQuery.toLowerCase();
@@ -213,57 +280,46 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 );
             }
 
-            const groups = filtered.reduce(
-                (groups, session) => {
-                    const group = getTimeGroup(session.lastUpdatedAt);
-                    if (!groups[group]) {
-                        groups[group] = [];
-                    }
-                    groups[group].push(session);
-                    return groups;
-                },
-                {} as { [key in TimeGroup]?: ChatSession[] }
+            // 2. Sort all sessions by lastUpdatedAt (newest first)
+            filtered = [...filtered].sort(
+                (a, b) => new Date(b.lastUpdatedAt).getTime() - new Date(a.lastUpdatedAt).getTime()
             );
 
-            Object.values(groups).forEach((sessions) => {
-                if (sessions) {
-                    sessions.sort(
-                        (a, b) =>
-                            new Date(b.lastUpdatedAt).getTime() -
-                            new Date(a.lastUpdatedAt).getTime()
-                    );
+            // 3. Group sorted sessions
+            const groups = filtered.reduce((acc, session) => {
+                const group = getTimeGroup(session.lastUpdatedAt);
+                if (!acc[group]) {
+                    acc[group] = [];
                 }
-            });
+                acc[group]!.push(session);
+                return acc;
+            }, {} as GroupedSessions);
 
             return groups;
         },
         [chatState.sessions]
     );
 
+    const currentSession = chatState.currentSessionId
+        ? chatState.sessions.find((s) => s.id === chatState.currentSessionId) || null
+        : null;
+
     const value = {
         sessions: chatState.sessions,
         currentSession,
         currentSessionId: chatState.currentSessionId,
         isTyping,
-        createNewChat,
-        sendMessage,
-        selectSession,
-        renameSession,
-        deleteSession,
-        getGroupedSessions,
         canUndo: deletedSessions.length > 0,
         canRedo: redoStack.length > 0,
+        selectSession,
+        createNewChat,
+        sendMessage,
+        renameSession,
+        deleteSession,
         undoDelete,
         redoDelete,
+        getGroupedSessions,
     };
 
     return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
-};
-
-export const useChatContext = () => {
-    const context = useContext(ChatContext);
-    if (!context) {
-        throw new Error('useChatContext must be used within a ChatProvider');
-    }
-    return context;
 };
