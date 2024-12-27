@@ -13,12 +13,15 @@ It's built with React, TailwindCSS, TypeScript, Webpack, and VS Code Webview API
 - [x] Easy access with keyboard shortcut `CMD + SHIFT + J`
 - [x] Chat history
 - [x] Undo & Redo Chat deletion
+- [x] Select file from workspace and use it in chat
+- [x] Sync workspace files with chat
+- [x] Copy code from editor to chat
+- [x] Extension configuration
 - [ ] Real-time chat experience
 - [ ] Integration with LLM providers
 - [ ] Customizable prompts, executing prompt using selected code
 - [ ] Testing with Jest and React Testing Library
 - [ ] CI/CD with GitHub Actions
-- [ ] Shadcn ui components (Optional)
 
 ## Development
 

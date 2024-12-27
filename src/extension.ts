@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { createMessage, MessageDataType, VSCodeMessage, VSCodeMessageType } from './webview/events';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -27,13 +28,17 @@ export function activate(context: vscode.ExtensionContext) {
 
     fileSystemWatcher.onDidCreate((uri) => {
         if (provider.currentView) {
-            provider.currentView.webview.postMessage({ type: 'fileCreated', path: uri.fsPath });
+            provider.currentView.webview.postMessage(
+                createMessage(VSCodeMessageType.FILE_CREATED, { path: uri.fsPath })
+            );
         }
     });
 
     fileSystemWatcher.onDidDelete((uri) => {
         if (provider.currentView) {
-            provider.currentView.webview.postMessage({ type: 'fileDeleted', path: uri.fsPath });
+            provider.currentView.webview.postMessage(
+                createMessage(VSCodeMessageType.FILE_DELETED, { path: uri.fsPath })
+            );
         }
     });
 
@@ -47,23 +52,17 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register new chat command
     let newChatDisposable = vscode.commands.registerCommand('ai-bar.newChat', () => {
-        console.log('New chat command triggered');
         if (provider.currentView) {
-            console.log('Sending newChat message to webview');
-            provider.currentView.webview.postMessage({ type: 'newChat' });
-        } else {
-            console.log('No webview available');
+            provider.currentView.webview.postMessage(createMessage(VSCodeMessageType.NEW_CHAT));
         }
     });
 
     // Register history toggle command
     let toggleHistoryDisposable = vscode.commands.registerCommand('ai-bar.toggleHistory', () => {
-        console.log('Toggle history command triggered');
         if (provider.currentView) {
-            console.log('Sending toggleHistory message to webview');
-            provider.currentView.webview.postMessage({ type: 'toggleHistory' });
-        } else {
-            console.log('No webview available');
+            provider.currentView.webview.postMessage(
+                createMessage(VSCodeMessageType.TOGGLE_HISTORY)
+            );
         }
     });
 
@@ -83,7 +82,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Register openSettings command
     context.subscriptions.push(
         vscode.commands.registerCommand('ai-bar.openSettings', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', '@ext:ai-bar.ai-bar');
@@ -153,12 +151,30 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
                         align-items: center;
                         height: 100vh;
                         font-size: 1.2em;
+                        flex-direction: column;
+                        gap: 1rem;
+                    }
+                    .spinner {
+                        width: 40px;
+                        height: 40px;
+                        border: 3px solid var(--vscode-editor-foreground);
+                        border-radius: 50%;
+                        border-top-color: transparent;
+                        animation: spin 1s linear infinite;
+                    }
+                    @keyframes spin {
+                        to {
+                            transform: rotate(360deg);
+                        }
                     }
                 </style>
             </head>
             <body>
                 <div id="root">
-                    <div class="loading">Loading...</div>
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading...</div>
+                    </div>
                 </div>
                 <script>
                     window.process = {
@@ -172,105 +188,130 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
             </html>`;
 
         // Enable webview logging and message handling
-        webviewView.webview.onDidReceiveMessage(async (message) => {
-            console.log('Received message from webview:', message);
-            switch (message.type) {
-                case 'log':
-                    console.log('Webview:', message.message);
-                    break;
-                case 'error':
-                    console.error('Webview Error:', message.message);
-                    break;
-                case 'getFileTree':
-                    try {
-                        const workspaceRoot = vscode.workspace.workspaceFolders?.[0];
-                        if (!workspaceRoot) {
-                            webviewView.webview.postMessage({
-                                type: 'fileTree',
-                                tree: [],
-                                error: 'No workspace folder is open. Please open a folder or workspace first.',
-                            });
-                            break;
-                        }
-
-                        const files = await vscode.workspace.findFiles(
-                            message.data?.query ? `**/*${message.data.query}*` : '**/*',
-                            '**/node_modules/**'
+        webviewView.webview.onDidReceiveMessage(
+            async (message: VSCodeMessage<VSCodeMessageType>) => {
+                console.log('Received message from webview:', message);
+                switch (message.type) {
+                    case VSCodeMessageType.LOG:
+                        console.log(
+                            'Webview:',
+                            (message.data as MessageDataType<VSCodeMessageType.LOG>).message
                         );
+                        break;
 
-                        const tree = files.map((file) => ({
-                            id: Buffer.from(file.fsPath).toString('base64'),
-                            name: file.path.split('/').pop() || file.path,
-                            path: file.fsPath,
-                            type: 'file' as const,
-                        }));
+                    case VSCodeMessageType.ERROR:
+                        console.error(
+                            'Webview Error:',
+                            (message.data as MessageDataType<VSCodeMessageType.ERROR>).message
+                        );
+                        break;
 
-                        webviewView.webview.postMessage({
-                            type: 'fileTree',
-                            tree,
-                        });
-                    } catch (error) {
-                        webviewView.webview.postMessage({
-                            type: 'fileTree',
-                            tree: [],
-                            error:
-                                'Error loading file tree: ' +
-                                (error instanceof Error ? error.message : String(error)),
-                        });
-                    }
-                    break;
-                case 'readFile':
-                    try {
-                        const document = await vscode.workspace.openTextDocument(message.data.path);
-                        const content = document.getText();
+                    case VSCodeMessageType.GET_FILE_TREE:
+                        try {
+                            const workspaceRoot = vscode.workspace.workspaceFolders?.[0];
+                            if (!workspaceRoot) {
+                                webviewView.webview.postMessage(
+                                    createMessage(VSCodeMessageType.FILE_TREE, {
+                                        tree: [],
+                                        error: 'No workspace folder is open. Please open a folder or workspace first.',
+                                    })
+                                );
+                                break;
+                            }
 
-                        webviewView.webview.postMessage({
-                            type: 'fileContent',
-                            content,
-                        });
-                    } catch (error) {
-                        console.error('Error reading file:', error);
-                    }
-                    break;
-                case 'openFile':
-                    try {
-                        const document = await vscode.workspace.openTextDocument(message.data.path);
-                        await vscode.window.showTextDocument(document, { preview: false });
-                    } catch (error) {
-                        console.error('Error opening file:', error);
-                    }
-                    break;
-                case 'getWorkspacePath':
-                    if (
-                        vscode.workspace.workspaceFolders &&
-                        vscode.workspace.workspaceFolders.length > 0
-                    ) {
-                        webviewView.webview.postMessage({
-                            type: 'workspacePath',
-                            path: vscode.workspace.workspaceFolders[0].uri.fsPath,
-                        });
-                    }
-                    break;
-                case 'getEditorSelectionInfo':
-                    const editor = vscode.window.activeTextEditor;
-                    if (editor) {
-                        const selection = editor.selection;
-                        const fullPath = editor.document.fileName;
-                        const fileName = fullPath.split(/[\\/]/).pop() || fullPath;
+                            const query = (message.data as { query?: string })?.query;
+                            const files = await vscode.workspace.findFiles(
+                                query ? `**/*${query}*` : '**/*',
+                                '**/node_modules/**'
+                            );
 
-                        webviewView.webview.postMessage({
-                            type: 'editorSelectionInfo',
-                            data: {
-                                fileName,
-                                fullPath,
-                                startLine: selection.start.line + 1,
-                                endLine: selection.end.line + 1,
-                            },
-                        });
-                    }
-                    break;
+                            const tree = files.map((file) => ({
+                                id: Buffer.from(file.fsPath).toString('base64'),
+                                name: file.path.split('/').pop() || file.path,
+                                path: file.fsPath,
+                                type: 'file' as const,
+                            }));
+
+                            webviewView.webview.postMessage(
+                                createMessage(VSCodeMessageType.FILE_TREE, { tree })
+                            );
+                        } catch (error) {
+                            webviewView.webview.postMessage(
+                                createMessage(VSCodeMessageType.FILE_TREE, {
+                                    tree: [],
+                                    error:
+                                        'Error loading file tree: ' +
+                                        (error instanceof Error ? error.message : String(error)),
+                                })
+                            );
+                        }
+                        break;
+
+                    case VSCodeMessageType.READ_FILE:
+                        try {
+                            const filePath = (message.data as { path: string }).path;
+                            const document = await vscode.workspace.openTextDocument(filePath);
+                            const content = document.getText();
+                            webviewView.webview.postMessage(
+                                createMessage(VSCodeMessageType.FILE_CONTENT, { content })
+                            );
+                        } catch (error) {
+                            console.error('Error reading file:', error);
+                            // Send error message back to webview
+                            webviewView.webview.postMessage(
+                                createMessage(VSCodeMessageType.FILE_CONTENT, {
+                                    content: `Error reading file: ${error instanceof Error ? error.message : String(error)}`,
+                                    error: true,
+                                })
+                            );
+                        }
+                        break;
+
+                    case VSCodeMessageType.OPEN_FILE:
+                        try {
+                            const filePath = (message.data as { path: string }).path;
+                            const document = await vscode.workspace.openTextDocument(filePath);
+                            await vscode.window.showTextDocument(document, { preview: false });
+                        } catch (error) {
+                            console.error('Error opening file:', error);
+                        }
+                        break;
+
+                    case VSCodeMessageType.GET_WORKSPACE_PATH:
+                        if (
+                            vscode.workspace.workspaceFolders &&
+                            vscode.workspace.workspaceFolders.length > 0
+                        ) {
+                            webviewView.webview.postMessage(
+                                createMessage(VSCodeMessageType.WORKSPACE_PATH, {
+                                    path: vscode.workspace.workspaceFolders[0].uri.fsPath,
+                                })
+                            );
+                        }
+                        break;
+
+                    case VSCodeMessageType.GET_EDITOR_SELECTION_INFO:
+                        const editor = vscode.window.activeTextEditor;
+                        if (editor) {
+                            const selection = editor.selection;
+                            const fullPath = editor.document.fileName;
+                            const fileName = fullPath.split(/[\\/]/).pop() || fullPath;
+
+                            webviewView.webview.postMessage(
+                                createMessage(VSCodeMessageType.EDITOR_SELECTION_INFO, {
+                                    data: {
+                                        fileName,
+                                        fullPath,
+                                        startLine: selection.start.line + 1,
+                                        endLine: selection.end.line + 1,
+                                    },
+                                })
+                            );
+                        }
+                        break;
+                }
             }
-        });
+        );
     }
 
     private _getNonce() {

@@ -4,6 +4,7 @@ import { ChatHistory } from './components/chat-history';
 import { MessageInput } from './components/messaging/message-input';
 import { MessageList } from './components/messaging/message-list';
 import { useChatContext } from './contexts/chat-context';
+import { VSCodeMessageType } from './events';
 
 export const App: React.FC = () => {
     const { createNewChat } = useChatContext();
@@ -13,7 +14,7 @@ export const App: React.FC = () => {
         const messageHandler = (event: MessageEvent) => {
             const message = event.data;
             switch (message.type) {
-                case 'newChat':
+                case VSCodeMessageType.NEW_CHAT:
                     createNewChat();
                     break;
             }

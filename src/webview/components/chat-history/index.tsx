@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useChatContext } from '../../contexts/chat-context';
+import { VSCodeMessageType } from '../../events';
 import { ChatGroup } from './chat-group';
 import { EmptyState } from './empty-state';
 import { SearchInput } from './search-input';
@@ -25,7 +26,7 @@ export const ChatHistory: React.FC = () => {
         const toggleHistoryHandler = (event: MessageEvent) => {
             const message = event.data;
             switch (message.type) {
-                case 'toggleHistory':
+                case VSCodeMessageType.TOGGLE_HISTORY:
                     setIsOpen((prev) => !prev);
                     break;
             }

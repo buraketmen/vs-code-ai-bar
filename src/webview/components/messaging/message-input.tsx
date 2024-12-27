@@ -3,6 +3,7 @@ import * as React from 'react';
 import { AICommand } from '../../ai/types';
 import { useChatContext } from '../../contexts/chat-context';
 import { useModelContext } from '../../contexts/model-context';
+import { createMessage, EditorSelectionInfoResponse, VSCodeMessageType } from '../../events';
 import ModelSelect from '../model-select';
 import { AttachAssets } from './attach-assets';
 
@@ -10,7 +11,9 @@ const MessageInputComponent: React.FC = () => {
     const { selectedModel } = useModelContext();
     const { isTyping, chatWithAI, handleAttachFile } = useChatContext();
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-    const pendingPasteResolveRef = React.useRef<((data: any) => void) | undefined>(undefined);
+    const pendingPasteResolveRef = React.useRef<
+        ((data: EditorSelectionInfoResponse) => void) | undefined
+    >(undefined);
     const [isFocused, setIsFocused] = React.useState<boolean>(false);
     const [inputText, setInputText] = React.useState<string>('');
 
@@ -18,7 +21,10 @@ const MessageInputComponent: React.FC = () => {
     React.useEffect(() => {
         const handleSelectionInfo = (event: MessageEvent) => {
             const { type, data } = event.data;
-            if (type === 'editorSelectionInfo' && pendingPasteResolveRef.current) {
+            if (
+                type === VSCodeMessageType.EDITOR_SELECTION_INFO &&
+                pendingPasteResolveRef.current
+            ) {
                 pendingPasteResolveRef.current(data);
                 pendingPasteResolveRef.current = undefined;
             }
@@ -29,14 +35,9 @@ const MessageInputComponent: React.FC = () => {
     }, []);
 
     const getSelectionInfo = async () => {
-        return new Promise<{
-            fileName: string;
-            fullPath: string;
-            startLine?: number;
-            endLine?: number;
-        }>((resolve) => {
+        return new Promise<EditorSelectionInfoResponse>((resolve) => {
             pendingPasteResolveRef.current = resolve;
-            window.vscode.postMessage({ type: 'getEditorSelectionInfo' });
+            window.vscode.postMessage(createMessage(VSCodeMessageType.GET_EDITOR_SELECTION_INFO));
         });
     };
 
@@ -48,10 +49,12 @@ const MessageInputComponent: React.FC = () => {
         if (lines.length > 1 || /[{}[\]()=+\-*/<>]/.test(text)) {
             e.preventDefault();
 
-            const { fileName, fullPath, startLine, endLine } = await getSelectionInfo();
+            const {
+                data: { fileName, fullPath, startLine, endLine },
+            } = await getSelectionInfo();
 
             handleAttachFile({
-                name: fileName || 'Pasted Code',
+                name: fileName || 'Code snippet',
                 path: fullPath || undefined,
                 type: 'snippet',
                 content: text,

@@ -12,6 +12,13 @@ import {
 } from 'lucide-react';
 import * as React from 'react';
 import { useChatContext } from '../contexts/chat-context';
+import {
+    createMessage,
+    FileContentData,
+    FileTreeResponseData,
+    VSCodeMessageType,
+    WorkspacePathData,
+} from '../events';
 
 interface FileSelectorProps {
     className?: string;
@@ -70,10 +77,11 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
 
     React.useEffect(() => {
         // Get workspace path when component mounts
-        window.vscode.postMessage({ type: 'getWorkspacePath' });
+        window.vscode.postMessage(createMessage(VSCodeMessageType.GET_WORKSPACE_PATH));
         const handleMessage = (event: MessageEvent) => {
-            const { type, path } = event.data;
-            if (type === 'workspacePath') {
+            const { type, data } = event.data;
+            if (type === VSCodeMessageType.WORKSPACE_PATH) {
+                const { path } = data as WorkspacePathData;
                 setWorkspacePath(path);
             }
         };
@@ -84,7 +92,10 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
     React.useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
             const { type } = event.data;
-            if (type === 'fileCreated' || type === 'fileDeleted') {
+            if (
+                type === VSCodeMessageType.FILE_CREATED ||
+                type === VSCodeMessageType.FILE_DELETED
+            ) {
                 loadFileTree();
             }
         };
@@ -96,8 +107,9 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
     // Single event handler for all file tree related messages
     React.useEffect(() => {
         const handleFileTreeMessage = (event: MessageEvent) => {
-            const { type, tree, error: responseError } = event.data;
-            if (type === 'fileTree') {
+            const { type, data } = event.data;
+            if (type === VSCodeMessageType.FILE_TREE) {
+                const { tree, error: responseError } = data as FileTreeResponseData;
                 if (responseError) {
                     setError(responseError);
                 } else {
@@ -113,8 +125,15 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
     // Single event handler for file content messages
     React.useEffect(() => {
         const handleFileContentMessage = (event: MessageEvent) => {
-            const { type, content } = event.data;
-            if (type === 'fileContent' && activeFileReadPath) {
+            const { type, data } = event.data;
+            if (type === VSCodeMessageType.FILE_CONTENT && activeFileReadPath) {
+                const { content, error } = data as FileContentData;
+                if (error) {
+                    setError(content);
+                    setActiveFileReadPath(null);
+                    return;
+                }
+
                 // Find the file that was being read
                 const pendingFile = fileTree.find((file) => file.path === activeFileReadPath);
                 if (pendingFile) {
@@ -139,10 +158,9 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         setLoading(true);
         setError(null);
         try {
-            window.vscode.postMessage({
-                type: 'getFileTree',
-                data: { query: searchQuery },
-            });
+            window.vscode.postMessage(
+                createMessage(VSCodeMessageType.GET_FILE_TREE, { query: searchQuery })
+            );
         } catch (error) {
             setError('Error loading file tree');
             console.error('Error loading file tree:', error);
@@ -162,10 +180,9 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
 
         try {
             setActiveFileReadPath(item.path);
-            window.vscode.postMessage({
-                type: 'readFile',
-                data: { path: item.path },
-            });
+            window.vscode.postMessage(
+                createMessage(VSCodeMessageType.READ_FILE, { path: item.path })
+            );
         } catch (error) {
             console.error('Error reading file:', error);
             setActiveFileReadPath(null);
@@ -337,7 +354,6 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
                         {loading ? (
                             <div className="flex items-center gap-2 px-2 py-1 text-xs">
                                 <Loader size={12} className="animate-spin" />
-                                Loading...
                             </div>
                         ) : error ? (
                             <div className="text-vscode-error flex items-center gap-2 px-2 py-1 text-xs">

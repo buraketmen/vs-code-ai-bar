@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { AIManager } from '../ai/ai-manager';
 import { AICommand, AttachedFile } from '../ai/types';
+import { createMessage, FileOperationData, VSCodeMessageType, WorkspacePathData } from '../events';
 import { AIModel, ChatSession, ChatState, GroupedSessions, Message } from '../types';
 import { generateUUID } from '../utils/helpers';
 import { getTimeGroup } from '../utils/time';
@@ -37,6 +38,7 @@ interface ChatContextType {
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
+const CHAT_DEFAULT_TITLE: string = 'New Chat';
 
 export const useChatContext = () => {
     const context = useContext(ChatContext);
@@ -102,12 +104,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const aiManager = AIManager.getInstance();
 
-    // Get workspace path
     useEffect(() => {
-        window.vscode.postMessage({ type: 'getWorkspacePath' });
+        window.vscode.postMessage(createMessage(VSCodeMessageType.GET_WORKSPACE_PATH));
         const handleWorkspaceMessage = (event: MessageEvent) => {
-            const { type, path } = event.data;
-            if (type === 'workspacePath') {
+            const { type, data } = event.data;
+            if (type === VSCodeMessageType.WORKSPACE_PATH) {
+                const { path } = data as WorkspacePathData;
                 setWorkspacePath(path);
             }
         };
@@ -115,11 +117,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return () => window.removeEventListener('message', handleWorkspaceMessage);
     }, []);
 
-    // Listen for file deletion events and manage selectedFile
     useEffect(() => {
         const handleMessage = (event: MessageEvent) => {
-            const { type, path } = event.data;
-            if (type === 'fileDeleted') {
+            const { type, data } = event.data;
+            if (type === VSCodeMessageType.FILE_DELETED) {
+                const { path } = data as FileOperationData;
                 setAttachedFiles((prev) => prev.filter((file) => file.path !== path));
             }
         };
@@ -154,7 +156,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const createNewChat = useCallback(() => {
         const newSession: ChatSession = {
             id: Date.now().toString(),
-            title: 'New Chat',
+            title: CHAT_DEFAULT_TITLE,
             messages: [],
             createdAt: new Date().toISOString(),
             lastUpdatedAt: new Date().toISOString(),
@@ -183,10 +185,12 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             };
 
             const session = chatState.sessions.find((s) => s.id === chatState.currentSessionId);
-            if (session && session.messages.length === 1) {
+            if (session && session.title === CHAT_DEFAULT_TITLE) {
+                const words = text.trim().split(/\s+/);
+                const firstThreeWords = words.slice(0, 3).join(' ');
                 updateSession(chatState.currentSessionId, (s) => ({
                     ...s,
-                    title: `${text.slice(0, 20)}...`,
+                    title: `${firstThreeWords}...`,
                 }));
             }
 
