@@ -9,8 +9,9 @@ import {
     useState,
 } from 'react';
 import { AIManager } from '../ai/ai-manager';
-import { AICommand } from '../ai/types';
+import { AICommand, AttachedFile } from '../ai/types';
 import { AIModel, ChatSession, ChatState, GroupedSessions, Message } from '../types';
+import { generateUUID } from '../utils/helpers';
 import { getTimeGroup } from '../utils/time';
 
 interface ChatContextType {
@@ -20,6 +21,8 @@ interface ChatContextType {
     isTyping: boolean;
     canUndo: boolean;
     canRedo: boolean;
+    attachedFiles: AttachedFile[];
+    selectedFile: AttachedFile | undefined;
     selectSession: (sessionId: string) => void;
     createNewChat: () => void;
     chatWithAI: (text: string, model: AIModel, command: AICommand) => void;
@@ -28,6 +31,9 @@ interface ChatContextType {
     undoDelete: () => void;
     redoDelete: () => void;
     getGroupedSessions: (searchQuery: string) => GroupedSessions;
+    handleAttachFile: (file: Omit<AttachedFile, 'id'>) => void;
+    handleRemoveFile: (fileId: string) => void;
+    setSelectedFile: (file: AttachedFile | undefined) => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -90,8 +96,61 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isTyping, setIsTyping] = useState(false);
     const [deletedSessions, setDeletedSessions] = useState<ChatSession[]>([]);
     const [redoStack, setRedoStack] = useState<ChatSession[]>([]);
+    const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+    const [selectedFile, setSelectedFile] = useState<AttachedFile | undefined>();
+    const [workspacePath, setWorkspacePath] = useState<string>('');
 
     const aiManager = AIManager.getInstance();
+
+    // Get workspace path
+    useEffect(() => {
+        window.vscode.postMessage({ type: 'getWorkspacePath' });
+        const handleWorkspaceMessage = (event: MessageEvent) => {
+            const { type, path } = event.data;
+            if (type === 'workspacePath') {
+                setWorkspacePath(path);
+            }
+        };
+        window.addEventListener('message', handleWorkspaceMessage);
+        return () => window.removeEventListener('message', handleWorkspaceMessage);
+    }, []);
+
+    // Listen for file deletion events and manage selectedFile
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            const { type, path } = event.data;
+            if (type === 'fileDeleted') {
+                setAttachedFiles((prev) => {
+                    const newFiles = prev.filter((file) => {
+                        if (!file.path) return true;
+
+                        // Normalize paths by removing workspace prefix and converting backslashes
+                        const normalizedFilePath = file.path
+                            .replace(workspacePath, '')
+                            .replace(/\\/g, '/')
+                            .replace(/^\/+/, '');
+                        const normalizedDeletedPath = path
+                            .replace(workspacePath, '')
+                            .replace(/\\/g, '/')
+                            .replace(/^\/+/, '');
+
+                        const shouldKeep = normalizedFilePath !== normalizedDeletedPath;
+
+                        // If file is being removed and it's selected, clear selection
+                        if (!shouldKeep && selectedFile && selectedFile.id === file.id) {
+                            setSelectedFile(undefined);
+                        }
+                        return shouldKeep;
+                    });
+
+                    return newFiles;
+                });
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [workspacePath, selectedFile]);
 
     useEffect(() => {
         // Load saved sessions from VS Code storage
@@ -289,6 +348,25 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? chatState.sessions.find((s) => s.id === chatState.currentSessionId) || null
         : null;
 
+    const handleAttachFile = useCallback((file: Omit<AttachedFile, 'id'>) => {
+        const fileWithId = {
+            ...file,
+            id: generateUUID(),
+        };
+        setAttachedFiles((prev) => [...prev, fileWithId]);
+    }, []);
+
+    const handleRemoveFile = useCallback(
+        (fileId: string) => {
+            setAttachedFiles((prev) => prev.filter((file) => file.id !== fileId));
+            // If the removed file was selected, clear the selection
+            if (selectedFile && selectedFile.id === fileId) {
+                setSelectedFile(undefined);
+            }
+        },
+        [selectedFile]
+    );
+
     const value = useMemo(
         () => ({
             sessions: chatState.sessions,
@@ -297,6 +375,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isTyping,
             canUndo: deletedSessions.length > 0,
             canRedo: redoStack.length > 0,
+            attachedFiles,
+            selectedFile,
             selectSession,
             createNewChat,
             chatWithAI,
@@ -305,6 +385,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             undoDelete,
             redoDelete,
             getGroupedSessions,
+            handleAttachFile,
+            handleRemoveFile,
+            setSelectedFile,
         }),
         [
             chatState.sessions,
@@ -312,6 +395,8 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isTyping,
             deletedSessions,
             redoStack,
+            attachedFiles,
+            selectedFile,
             selectSession,
             createNewChat,
             chatWithAI,
@@ -320,6 +405,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             undoDelete,
             redoDelete,
             getGroupedSessions,
+            handleAttachFile,
+            handleRemoveFile,
+            setSelectedFile,
         ]
     );
 

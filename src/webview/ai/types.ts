@@ -59,6 +59,7 @@ export interface TestCoverageParams extends CodeParams {
 }
 
 export interface AttachedFile {
+    id: string;
     name: string;
     path?: string;
     type: 'file' | 'snippet';

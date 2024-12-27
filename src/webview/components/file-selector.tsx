@@ -11,16 +11,15 @@ import {
     Search,
 } from 'lucide-react';
 import * as React from 'react';
-import { AttachedFile } from '../ai/types';
+import { useChatContext } from '../contexts/chat-context';
 
 interface FileSelectorProps {
-    onSelect: (file: AttachedFile) => void;
     className?: string;
     buttonText?: string;
-    attachedFiles?: AttachedFile[];
 }
 
 interface FileTreeItem {
+    id: string;
     name: string;
     path: string;
     type: 'file' | 'directory';
@@ -28,16 +27,16 @@ interface FileTreeItem {
 }
 
 export const FileSelector: React.FC<FileSelectorProps> = ({
-    onSelect,
     className,
     buttonText = 'Add Context',
-    attachedFiles = [],
 }) => {
+    const { attachedFiles, handleAttachFile } = useChatContext();
     const [isOpen, setIsOpen] = React.useState(false);
     const [searchQuery, setSearchQuery] = React.useState('');
     const [fileTree, setFileTree] = React.useState<FileTreeItem[]>([]);
     const [loading, setLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [activeFileReadPath, setActiveFileReadPath] = React.useState<string | null>(null);
     const buttonRef = React.useRef<HTMLButtonElement>(null);
     const dropdownRef = React.useRef<HTMLDivElement>(null);
     const searchRef = React.useRef<HTMLInputElement>(null);
@@ -94,6 +93,48 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         return () => window.removeEventListener('message', handleMessage);
     }, []);
 
+    // Single event handler for all file tree related messages
+    React.useEffect(() => {
+        const handleFileTreeMessage = (event: MessageEvent) => {
+            const { type, tree, error: responseError } = event.data;
+            if (type === 'fileTree') {
+                if (responseError) {
+                    setError(responseError);
+                } else {
+                    setFileTree(tree);
+                }
+            }
+        };
+
+        window.addEventListener('message', handleFileTreeMessage);
+        return () => window.removeEventListener('message', handleFileTreeMessage);
+    }, []);
+
+    // Single event handler for file content messages
+    React.useEffect(() => {
+        const handleFileContentMessage = (event: MessageEvent) => {
+            const { type, content } = event.data;
+            if (type === 'fileContent' && activeFileReadPath) {
+                // Find the file that was being read
+                const pendingFile = fileTree.find((file) => file.path === activeFileReadPath);
+                if (pendingFile) {
+                    handleAttachFile({
+                        name: pendingFile.name,
+                        path: pendingFile.path,
+                        type: 'file',
+                        content,
+                    });
+                    setIsOpen(false);
+                    setSearchQuery('');
+                    setActiveFileReadPath(null);
+                }
+            }
+        };
+
+        window.addEventListener('message', handleFileContentMessage);
+        return () => window.removeEventListener('message', handleFileContentMessage);
+    }, [fileTree, handleAttachFile, activeFileReadPath]);
+
     const loadFileTree = async () => {
         setLoading(true);
         setError(null);
@@ -111,55 +152,23 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
     };
 
     React.useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            const { type, tree, error: responseError } = event.data;
-            if (type === 'fileTree') {
-                if (responseError) {
-                    setError(responseError);
-                } else {
-                    setFileTree(tree);
-                }
-            }
-        };
-
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, []);
-
-    React.useEffect(() => {
         loadFileTree();
     }, [searchQuery]);
 
     const handleFileSelect = async (item: FileTreeItem) => {
-        // Dosya zaten ekli mi kontrol et (tam path'e göre)
         if (attachedFiles.some((file) => file.path === item.path)) {
             return;
         }
 
         try {
+            setActiveFileReadPath(item.path);
             window.vscode.postMessage({
                 type: 'readFile',
                 data: { path: item.path },
             });
-
-            const handleMessage = (event: MessageEvent) => {
-                const { type, content } = event.data;
-                if (type === 'fileContent') {
-                    onSelect({
-                        name: item.name,
-                        path: item.path,
-                        type: 'file',
-                        content,
-                    });
-                    setIsOpen(false);
-                    setSearchQuery('');
-                    window.removeEventListener('message', handleMessage);
-                }
-            };
-
-            window.addEventListener('message', handleMessage);
         } catch (error) {
             console.error('Error reading file:', error);
+            setActiveFileReadPath(null);
         }
     };
 

@@ -199,6 +199,7 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
                         );
 
                         const tree = files.map((file) => ({
+                            id: Buffer.from(file.fsPath).toString('base64'),
                             name: file.path.split('/').pop() || file.path,
                             path: file.fsPath,
                             type: 'file' as const,
@@ -247,6 +248,24 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
                         webviewView.webview.postMessage({
                             type: 'workspacePath',
                             path: vscode.workspace.workspaceFolders[0].uri.fsPath,
+                        });
+                    }
+                    break;
+                case 'getEditorSelectionInfo':
+                    const editor = vscode.window.activeTextEditor;
+                    if (editor) {
+                        const selection = editor.selection;
+                        const fullPath = editor.document.fileName;
+                        const fileName = fullPath.split(/[\\/]/).pop() || fullPath;
+
+                        webviewView.webview.postMessage({
+                            type: 'editorSelectionInfo',
+                            data: {
+                                fileName,
+                                fullPath,
+                                startLine: selection.start.line + 1,
+                                endLine: selection.end.line + 1,
+                            },
                         });
                     }
                     break;

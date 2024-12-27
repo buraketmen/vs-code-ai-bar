@@ -1,45 +1,26 @@
 import { X } from 'lucide-react';
 import * as React from 'react';
-import { AttachedFile } from '../../ai/types';
+import { useChatContext } from '../../contexts/chat-context';
 import { CodeSnippet } from '../code-snippet';
 import { FileSelector } from '../file-selector';
 
-interface AttachAssetsProps {
-    attachedFiles?: AttachedFile[];
-    onAttachFile?: (file: AttachedFile) => void;
-    onRemoveFile?: (filePath: string) => void;
-}
-
-export const AttachAssets: React.FC<AttachAssetsProps> = ({
-    attachedFiles = [],
-    onAttachFile,
-    onRemoveFile,
-}) => {
-    const [selectedFile, setSelectedFile] = React.useState<AttachedFile | undefined>();
+export const AttachAssets: React.FC = () => {
+    const { attachedFiles, selectedFile, handleAttachFile, handleRemoveFile, setSelectedFile } =
+        useChatContext();
 
     return (
         <div className="w-full gap-2">
-            <CodeSnippet
-                file={selectedFile}
-                onRemove={(path) => {
-                    onRemoveFile?.(path);
-                    setSelectedFile(undefined);
-                }}
-            />
+            <CodeSnippet />
 
             <div className="flex flex-wrap items-center gap-2">
-                <FileSelector
-                    onSelect={(file) => onAttachFile?.(file)}
-                    attachedFiles={attachedFiles}
-                    buttonText="Add Context"
-                />
+                <FileSelector buttonText="Add Context" />
 
                 {attachedFiles.map((file) => (
                     <div
-                        key={file.path || file.name}
-                        className="bg-vscode-bg-tertiary group flex cursor-pointer items-center gap-1 rounded border border-vscode-border p-1 text-xs hover:border-vscode-border-hover"
+                        key={file.id}
+                        className="bg-vscode-bg-tertiary group flex cursor-pointer items-center gap-1 rounded border border-vscode-border px-1 py-0.5 text-xs hover:border-vscode-border-hover"
                         onClick={() =>
-                            setSelectedFile(selectedFile?.name === file.name ? undefined : file)
+                            setSelectedFile(selectedFile?.id === file.id ? undefined : file)
                         }
                         title={file.path}
                     >
@@ -47,17 +28,14 @@ export const AttachAssets: React.FC<AttachAssetsProps> = ({
                             {file.name}
                             {file.startLine !== undefined &&
                                 file.endLine !== undefined &&
-                                `[${file.startLine}:${file.endLine}]`}
+                                ` [${file.startLine}:${file.endLine}]`}
                         </span>
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
-                                onRemoveFile?.(file.path || file.name);
-                                if (selectedFile?.name === file.name) {
-                                    setSelectedFile(undefined);
-                                }
+                                handleRemoveFile(file.id);
                             }}
-                            className="hover:bg-vscode-bg-hover ml-1 rounded-full p-0.5"
+                            className="hover:bg-vscode-bg-hover ml-1 rounded-full pl-1"
                         >
                             <X size={12} />
                         </button>
