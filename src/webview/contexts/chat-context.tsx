@@ -120,31 +120,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const handleMessage = (event: MessageEvent) => {
             const { type, path } = event.data;
             if (type === 'fileDeleted') {
-                setAttachedFiles((prev) => {
-                    const newFiles = prev.filter((file) => {
-                        if (!file.path) return true;
-
-                        // Normalize paths by removing workspace prefix and converting backslashes
-                        const normalizedFilePath = file.path
-                            .replace(workspacePath, '')
-                            .replace(/\\/g, '/')
-                            .replace(/^\/+/, '');
-                        const normalizedDeletedPath = path
-                            .replace(workspacePath, '')
-                            .replace(/\\/g, '/')
-                            .replace(/^\/+/, '');
-
-                        const shouldKeep = normalizedFilePath !== normalizedDeletedPath;
-
-                        // If file is being removed and it's selected, clear selection
-                        if (!shouldKeep && selectedFile && selectedFile.id === file.id) {
-                            setSelectedFile(undefined);
-                        }
-                        return shouldKeep;
-                    });
-
-                    return newFiles;
-                });
+                setAttachedFiles((prev) => prev.filter((file) => file.path !== path));
             }
         };
 

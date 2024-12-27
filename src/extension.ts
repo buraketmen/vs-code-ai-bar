@@ -27,13 +27,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     fileSystemWatcher.onDidCreate((uri) => {
         if (provider.currentView) {
-            provider.currentView.webview.postMessage({ type: 'fileCreated' });
+            provider.currentView.webview.postMessage({ type: 'fileCreated', path: uri.fsPath });
         }
     });
 
     fileSystemWatcher.onDidDelete((uri) => {
         if (provider.currentView) {
-            provider.currentView.webview.postMessage({ type: 'fileDeleted' });
+            provider.currentView.webview.postMessage({ type: 'fileDeleted', path: uri.fsPath });
         }
     });
 
