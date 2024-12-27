@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { AICommand, AttachedFile } from '../../ai/types';
 import { useChatContext } from '../../contexts/chat-context';
 import { useModelContext } from '../../contexts/model-context';
 import ModelSelect from '../model-select';
-import { AICommand } from '../../ai/types';
+import { AttachAssets } from './attach-assets';
 
 const MessageInputComponent: React.FC = () => {
     const { selectedModel } = useModelContext();
@@ -10,6 +11,7 @@ const MessageInputComponent: React.FC = () => {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
     const [isFocused, setIsFocused] = React.useState<boolean>(false);
     const [inputText, setInputText] = React.useState<string>('');
+    const [attachedFiles, setAttachedFiles] = React.useState<AttachedFile[]>([]);
 
     React.useEffect(() => {
         if (textareaRef.current) {
@@ -27,6 +29,31 @@ const MessageInputComponent: React.FC = () => {
         }
     };
 
+    const handleAttachFile = (file: AttachedFile) => {
+        setAttachedFiles((prev) => [...prev, file]);
+    };
+
+    const handleRemoveFile = (filePath: string) => {
+        setAttachedFiles((prev) => prev.filter((file) => (file.path || file.name) !== filePath));
+    };
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const text = e.clipboardData.getData('text');
+        const lines = text.split('\n');
+
+        // If it looks like code (multiple lines or contains special characters)
+        if (lines.length > 1 || /[{}[\]()=+\-*/<>]/.test(text)) {
+            e.preventDefault();
+
+            // Add as a snippet
+            handleAttachFile({
+                name: 'Pasted Code',
+                type: 'snippet',
+                content: text,
+            });
+        }
+    };
+
     return (
         <div
             className={`relative flex w-full flex-col rounded-lg border border-vscode-border bg-vscode-bg-secondary p-2 transition-colors duration-150 ${
@@ -34,6 +61,13 @@ const MessageInputComponent: React.FC = () => {
             }`}
         >
             <form onSubmit={handleSubmit}>
+                <div className="flex w-full items-center justify-between gap-2 border-b border-vscode-border pb-1">
+                    <AttachAssets
+                        attachedFiles={attachedFiles}
+                        onAttachFile={handleAttachFile}
+                        onRemoveFile={handleRemoveFile}
+                    />
+                </div>
                 <div className="h-full w-full">
                     <textarea
                         ref={textareaRef}
@@ -45,6 +79,7 @@ const MessageInputComponent: React.FC = () => {
                                 handleSubmit(e);
                             }
                         }}
+                        onPaste={handlePaste}
                         onFocus={() => setIsFocused(true)}
                         onBlur={() => setIsFocused(false)}
                         placeholder="Type your message..."

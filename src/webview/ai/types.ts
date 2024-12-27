@@ -58,6 +58,15 @@ export interface TestCoverageParams extends CodeParams {
     testFiles: string;
 }
 
+export interface AttachedFile {
+    name: string;
+    path?: string;
+    type: 'file' | 'snippet';
+    content: string;
+    startLine?: number;
+    endLine?: number;
+}
+
 export type CommandParams = {
     [AICommand.CHAT]: ChatParams;
     [AICommand.OPTIMIZE_CODE]: CodeWithFocusParams;

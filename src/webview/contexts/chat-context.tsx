@@ -125,9 +125,9 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             lastUpdatedAt: new Date().toISOString(),
         };
 
-        dispatch({ type: 'SET_SESSIONS', sessions: [...chatState.sessions, newSession] });
+        dispatch({ type: 'RESTORE_SESSION', session: newSession });
         dispatch({ type: 'SET_CURRENT_SESSION', sessionId: newSession.id });
-    }, [chatState.sessions]);
+    }, []);
 
     const updateSession = useCallback(
         (sessionId: string, updater: (session: ChatSession) => ChatSession) => {

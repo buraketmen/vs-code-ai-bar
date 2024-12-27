@@ -177,5 +177,8 @@
         "typescript": "^5.7.2",
         "webpack": "^5.95.0",
         "webpack-cli": "^5.1.4"
+    },
+    "dependencies": {
+        "lucide-react": "^0.469.0"
     }
 }

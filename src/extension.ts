@@ -155,7 +155,7 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
             </html>`;
 
         // Enable webview logging and message handling
-        webviewView.webview.onDidReceiveMessage((message) => {
+        webviewView.webview.onDidReceiveMessage(async (message) => {
             console.log('Received message from webview:', message);
             switch (message.type) {
                 case 'log':
@@ -163,6 +163,75 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'error':
                     console.error('Webview Error:', message.message);
+                    break;
+                case 'getFileTree':
+                    try {
+                        const workspaceRoot = vscode.workspace.workspaceFolders?.[0];
+                        if (!workspaceRoot) {
+                            webviewView.webview.postMessage({
+                                type: 'fileTree',
+                                tree: [],
+                                error: 'No workspace folder is open. Please open a folder or workspace first.',
+                            });
+                            break;
+                        }
+
+                        const files = await vscode.workspace.findFiles(
+                            message.data?.query ? `**/*${message.data.query}*` : '**/*',
+                            '**/node_modules/**'
+                        );
+
+                        const tree = files.map((file) => ({
+                            name: file.path.split('/').pop() || file.path,
+                            path: file.fsPath,
+                            type: 'file' as const,
+                        }));
+
+                        webviewView.webview.postMessage({
+                            type: 'fileTree',
+                            tree,
+                        });
+                    } catch (error) {
+                        webviewView.webview.postMessage({
+                            type: 'fileTree',
+                            tree: [],
+                            error:
+                                'Error loading file tree: ' +
+                                (error instanceof Error ? error.message : String(error)),
+                        });
+                    }
+                    break;
+                case 'readFile':
+                    try {
+                        const document = await vscode.workspace.openTextDocument(message.data.path);
+                        const content = document.getText();
+
+                        webviewView.webview.postMessage({
+                            type: 'fileContent',
+                            content,
+                        });
+                    } catch (error) {
+                        console.error('Error reading file:', error);
+                    }
+                    break;
+                case 'openFile':
+                    try {
+                        const document = await vscode.workspace.openTextDocument(message.data.path);
+                        await vscode.window.showTextDocument(document, { preview: false });
+                    } catch (error) {
+                        console.error('Error opening file:', error);
+                    }
+                    break;
+                case 'getWorkspacePath':
+                    if (
+                        vscode.workspace.workspaceFolders &&
+                        vscode.workspace.workspaceFolders.length > 0
+                    ) {
+                        webviewView.webview.postMessage({
+                            type: 'workspacePath',
+                            path: vscode.workspace.workspaceFolders[0].uri.fsPath,
+                        });
+                    }
                     break;
             }
         });
