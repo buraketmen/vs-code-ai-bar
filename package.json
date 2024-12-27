@@ -44,6 +44,11 @@
         },
         "commands": [
             {
+                "command": "ai-bar.open",
+                "title": "Open AI Bar",
+                "category": "AI Bar"
+            },
+            {
                 "command": "ai-bar.focus",
                 "title": "Focus AI Assistant",
                 "icon": "$(robot)"
@@ -62,11 +67,6 @@
                 "command": "ai-bar.openSettings",
                 "title": "Open Settings",
                 "icon": "$(gear)"
-            },
-            {
-                "command": "ai-bar.open",
-                "title": "Open AI Bar",
-                "category": "AI Bar"
             }
         ],
         "menus": {

@@ -82,6 +82,18 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
         return () => window.removeEventListener('message', handleMessage);
     }, []);
 
+    React.useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            const { type } = event.data;
+            if (type === 'fileCreated' || type === 'fileDeleted') {
+                loadFileTree();
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, []);
+
     const loadFileTree = async () => {
         setLoading(true);
         setError(null);
@@ -90,20 +102,6 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
                 type: 'getFileTree',
                 data: { query: searchQuery },
             });
-
-            const handleMessage = (event: MessageEvent) => {
-                const { type, tree, error: responseError } = event.data;
-                if (type === 'fileTree') {
-                    if (responseError) {
-                        setError(responseError);
-                    } else {
-                        setFileTree(tree);
-                    }
-                    window.removeEventListener('message', handleMessage);
-                }
-            };
-
-            window.addEventListener('message', handleMessage);
         } catch (error) {
             setError('Error loading file tree');
             console.error('Error loading file tree:', error);
@@ -111,6 +109,26 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
             setLoading(false);
         }
     };
+
+    React.useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            const { type, tree, error: responseError } = event.data;
+            if (type === 'fileTree') {
+                if (responseError) {
+                    setError(responseError);
+                } else {
+                    setFileTree(tree);
+                }
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, []);
+
+    React.useEffect(() => {
+        loadFileTree();
+    }, [searchQuery]);
 
     const handleFileSelect = async (item: FileTreeItem) => {
         // Dosya zaten ekli mi kontrol et (tam path'e göre)
@@ -265,19 +283,11 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
 
     return (
         <div className="relative">
-            <style>
-                {`
-                .rtl {
-                    direction: rtl;
-                    text-align: left;
-                }
-                `}
-            </style>
             <button
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={loading}
-                className={`inline-flex h-6 items-center gap-1 rounded bg-vscode-bg-secondary px-2 text-xs text-vscode-button-fg hover:bg-vscode-button-hover hover:text-vscode-button-fg focus:outline-none focus:ring-1 focus:ring-vscode-border disabled:cursor-not-allowed disabled:opacity-50 ${className} opacity-50 hover:opacity-100 focus:opacity-100`}
+                className={`inline-flex h-6 items-center gap-1 rounded bg-vscode-bg-secondary px-2 text-xs hover:bg-vscode-button-hover hover:text-vscode-button-fg focus:outline-none focus:ring-1 focus:ring-vscode-border disabled:cursor-not-allowed disabled:opacity-50 ${className} opacity-50 hover:opacity-100 focus:opacity-100`}
             >
                 <Plus size={14} />
                 {attachedFiles.length == 0 && <span>{buttonText}</span>}
@@ -339,11 +349,11 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
                                     title={item.path}
                                 >
                                     {getFileIcon(item.name)}
-                                    <div className="flex min-w-0 flex-1">
-                                        <span className="basis-2/3 truncate font-medium">
+                                    <div className="flex min-w-0 flex-1 gap-0.5">
+                                        <span className="basis-1/2 truncate font-medium">
                                             {item.name}
                                         </span>
-                                        <span className="rtl basis-1/3 truncate text-right opacity-40 group-hover:opacity-100">
+                                        <span className="rtl basis-1/2 truncate text-right opacity-40 group-hover:opacity-100">
                                             {getRelativePath(item.path)}
                                         </span>
                                     </div>

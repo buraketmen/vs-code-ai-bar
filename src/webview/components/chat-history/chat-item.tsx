@@ -30,8 +30,8 @@ export const ChatItem: React.FC<ChatItemProps> = ({
     <div
         className={`group relative mb-0.5 flex cursor-pointer items-center rounded px-2 py-1 text-xs transition-colors ${
             isSelected
-                ? 'bg-[var(--vscode-editor-selectionBackground)] text-[var(--vscode-editor-selectionForeground)]'
-                : 'hover:bg-[var(--vscode-list-hoverBackground)]'
+                ? 'bg-vscode-button-bg font-bold text-vscode-button-fg'
+                : 'hover:bg-button-hover hover:text-button-fg'
         }`}
         onClick={() => onSelect(session.id)}
     >
@@ -74,10 +74,13 @@ export const ChatItem: React.FC<ChatItemProps> = ({
                                 e.stopPropagation();
                                 onEditStart(session.id, session.title);
                             }}
-                            className="flex-none rounded p-0.5 text-vscode-fg opacity-75 transition-colors hover:bg-vscode-list-hover hover:opacity-100"
+                            className="flex-none rounded p-0.5 text-vscode-fg opacity-75 transition-colors hover:opacity-100"
                             title="Rename"
                         >
-                            <Edit size={14} />
+                            <Edit
+                                size={14}
+                                color={isSelected ? 'var(--vscode-button-fg)' : 'currentColor'}
+                            />
                         </button>
 
                         {!isSelected && (
@@ -86,7 +89,7 @@ export const ChatItem: React.FC<ChatItemProps> = ({
                                     e.stopPropagation();
                                     onDelete(session.id);
                                 }}
-                                className="flex-none rounded p-0.5 text-vscode-fg opacity-75 transition-colors hover:bg-vscode-list-hover hover:opacity-100"
+                                className="flex-none rounded p-0.5 text-vscode-fg opacity-75 transition-colors hover:opacity-100"
                                 title="Delete"
                             >
                                 <Trash size={14} />

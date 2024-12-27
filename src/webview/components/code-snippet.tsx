@@ -1,6 +1,6 @@
 import { ExternalLink, X } from 'lucide-react';
 import * as React from 'react';
-import { AttachedFile } from '../../ai/types';
+import { AttachedFile } from '../ai/types';
 
 interface CodeSnippetProps {
     file?: AttachedFile;
@@ -18,7 +18,7 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = ({ file, onRemove }) => {
     };
 
     return (
-        <div className="relative mb-1 max-h-[240px] min-h-[40px] w-full overflow-auto rounded border border-vscode-border bg-vscode-bg p-1 font-[var(--vscode-editor-font-family)] leading-[var(--vscode-editor-line-height)] text-[var(--vscode-editor-foreground)]">
+        <div className="relative mb-1 max-h-[240px] min-h-[40px] w-full overflow-auto rounded border border-vscode-border bg-[var(--vscode-editor-background)] p-1 font-[var(--vscode-editor-font-family)] leading-[var(--vscode-editor-line-height)] text-[var(--vscode-editor-foreground)]">
             <div className="sticky right-1 top-1 z-[1000] float-right mb-[-24px] flex gap-1">
                 <button
                     onClick={handleOpen}
@@ -36,27 +36,16 @@ export const CodeSnippet: React.FC<CodeSnippetProps> = ({ file, onRemove }) => {
                 </button>
             </div>
             <div className="flex whitespace-pre">
-                <div
-                    className="user-select-none border-r border-vscode-border bg-vscode-bg px-1 text-right text-[var(--vscode-editorLineNumber-foreground)]"
-                    aria-hidden="true"
-                    role="presentation"
-                >
-                    {file.content.split('\n').map((_, i) => (
-                        <div key={i} className="p-0.5 opacity-40">
-                            {i + 1}
-                        </div>
-                    ))}
-                </div>
-                <div className="flex flex-1 whitespace-pre px-0.5">
-                    <div className="view-lines">
-                        {file.content.split('\n').map((line, i) => (
-                            <div key={i} className="relative">
-                                <span className="font-[var(--vscode-editor-font-family)]">
-                                    {line || '\n'}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
+                <div className="flex-1 overflow-x-auto px-4">
+                    <pre className="m-0 w-fit">
+                        <code className="font-[var(--vscode-editor-font-family)] text-[var(--vscode-editor-foreground)]">
+                            {file.content.split('\n').map((line: string, i: number) => (
+                                <div key={i} className="relative leading-[1.4]">
+                                    <span>{line || '\u00A0'}</span>
+                                </div>
+                            ))}
+                        </code>
+                    </pre>
                 </div>
             </div>
         </div>

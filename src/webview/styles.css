@@ -88,6 +88,16 @@ button {
     }
 }
 
+.rtl {
+    direction: rtl;
+    text-align: left;
+}
+
+.ltr {
+    direction: ltr;
+    text-align: left;
+}
+
 /* Animations */
 @keyframes gradient {
     0% {

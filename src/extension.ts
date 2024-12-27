@@ -22,6 +22,23 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Watch for file system changes
+    const fileSystemWatcher = vscode.workspace.createFileSystemWatcher('**/*');
+
+    fileSystemWatcher.onDidCreate((uri) => {
+        if (provider.currentView) {
+            provider.currentView.webview.postMessage({ type: 'fileCreated' });
+        }
+    });
+
+    fileSystemWatcher.onDidDelete((uri) => {
+        if (provider.currentView) {
+            provider.currentView.webview.postMessage({ type: 'fileDeleted' });
+        }
+    });
+
+    context.subscriptions.push(fileSystemWatcher);
+
     // Register focus command
     let focusDisposable = vscode.commands.registerCommand('ai-bar.focus', async () => {
         const view = await vscode.commands.executeCommand('ai-bar-view.focus');

@@ -1,8 +1,8 @@
 import { X } from 'lucide-react';
 import * as React from 'react';
 import { AttachedFile } from '../../ai/types';
+import { CodeSnippet } from '../code-snippet';
 import { FileSelector } from '../file-selector';
-import { CodeSnippet } from './code-snippet';
 
 interface AttachAssetsProps {
     attachedFiles?: AttachedFile[];
