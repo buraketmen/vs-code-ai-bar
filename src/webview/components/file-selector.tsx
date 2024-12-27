@@ -277,7 +277,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({
                 ref={buttonRef}
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={loading}
-                className={`inline-flex h-6 items-center gap-1 rounded bg-vscode-bg-secondary px-2 text-xs text-vscode-button-fg hover:bg-vscode-button-hover hover:text-vscode-button-fg focus:outline-none focus:ring-1 focus:ring-vscode-border disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+                className={`inline-flex h-6 items-center gap-1 rounded bg-vscode-bg-secondary px-2 text-xs text-vscode-button-fg hover:bg-vscode-button-hover hover:text-vscode-button-fg focus:outline-none focus:ring-1 focus:ring-vscode-border disabled:cursor-not-allowed disabled:opacity-50 ${className} opacity-50 hover:opacity-100 focus:opacity-100`}
             >
                 <Plus size={14} />
                 {attachedFiles.length == 0 && <span>{buttonText}</span>}

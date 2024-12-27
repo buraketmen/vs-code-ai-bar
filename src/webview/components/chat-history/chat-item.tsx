@@ -1,3 +1,4 @@
+import { Edit, Trash } from 'lucide-react';
 import * as React from 'react';
 import { ChatSession } from '../../types';
 
@@ -58,7 +59,7 @@ export const ChatItem: React.FC<ChatItemProps> = ({
                                 onEditEnd();
                             }
                         }}
-                        className="bg-vscode-input-bg text-vscode-input-foreground border-vscode-border hover:border-vscode-border-hover focus:border-vscode-border-hover active:border-vscode-border-hover w-full rounded border p-1 text-xs"
+                        className="text-vscode-input-foreground w-full rounded border border-vscode-border bg-vscode-input-bg p-1 text-xs hover:border-vscode-border-hover focus:border-vscode-border-hover active:border-vscode-border-hover"
                         autoFocus
                     />
                 </div>
@@ -73,47 +74,22 @@ export const ChatItem: React.FC<ChatItemProps> = ({
                                 e.stopPropagation();
                                 onEditStart(session.id, session.title);
                             }}
-                            className="text-vscode-fg hover:bg-vscode-list-hover flex-none rounded p-0.5 transition-colors"
+                            className="flex-none rounded p-0.5 text-vscode-fg opacity-75 transition-colors hover:bg-vscode-list-hover hover:opacity-100"
                             title="Rename"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z" />
-                            </svg>
+                            <Edit size={14} />
                         </button>
+
                         {!isSelected && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onDelete(session.id);
                                 }}
-                                className="text-vscode-fg hover:bg-vscode-list-hover flex-none rounded p-0.5 transition-colors"
+                                className="flex-none rounded p-0.5 text-vscode-fg opacity-75 transition-colors hover:bg-vscode-list-hover hover:opacity-100"
                                 title="Delete"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                >
-                                    <path d="M3 6h18" />
-                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                </svg>
+                                <Trash size={14} />
                             </button>
                         )}
                     </div>

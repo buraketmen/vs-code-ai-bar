@@ -1,3 +1,4 @@
+import { CornerDownLeft } from 'lucide-react';
 import * as React from 'react';
 import { AICommand, AttachedFile } from '../../ai/types';
 import { useChatContext } from '../../contexts/chat-context';
@@ -94,20 +95,10 @@ const MessageInputComponent: React.FC = () => {
                     <button
                         type="submit"
                         disabled={isTyping || !inputText.trim()}
-                        className="flex shrink-0 cursor-pointer items-center justify-between rounded-md bg-vscode-button-bg p-1 text-xs text-vscode-button-fg hover:bg-vscode-button-hover disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex shrink-0 cursor-pointer items-center justify-between gap-1 rounded-md bg-vscode-button-bg p-1 text-xs text-vscode-button-fg hover:bg-vscode-button-hover disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         Submit
-                        <svg
-                            className="ml-1 h-3 w-3"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M13 4.5V9C13 10.1046 12.1046 11 11 11H6.41421L7.70711 12.2929L7 13L4 10L7 7L7.70711 7.70711L6.41421 9H11C11.5523 9 12 8.55228 12 8V4.5H13Z"
-                                fill="currentColor"
-                            />
-                        </svg>
+                        <CornerDownLeft size={11} />
                     </button>
                 </div>
             </form>
