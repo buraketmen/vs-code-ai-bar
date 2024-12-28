@@ -112,29 +112,64 @@
             "title": "AI Bar",
             "properties": {
                 "aiBar.shortcuts.open": {
+                    "order": 1,
                     "type": "string",
                     "default": "ctrl+shift+j",
                     "markdownDescription": "Keyboard shortcut to open AI Bar panel (requires restart)"
                 },
                 "aiBar.shortcuts.openSettings": {
+                    "order": 2,
                     "type": "string",
                     "default": "ctrl+shift+a",
                     "markdownDescription": "Keyboard shortcut to open AI Bar settings (requires restart)"
                 },
                 "aiBar.shortcuts.newChat": {
+                    "order": 3,
                     "type": "string",
                     "default": "ctrl+shift+k",
                     "markdownDescription": "Keyboard shortcut to start a new chat (requires restart)"
                 },
                 "aiBar.api.openai": {
+                    "order": 10,
                     "type": "string",
                     "default": "",
                     "markdownDescription": "OpenAI API Key for ChatGPT models. [Get API Key](https://platform.openai.com/api-keys)"
                 },
                 "aiBar.api.anthropic": {
+                    "order": 11,
                     "type": "string",
                     "default": "",
                     "markdownDescription": "Anthropic API Key for Claude models. [Get API Key](https://console.anthropic.com/settings/keys)"
+                },
+                "aiBar.ai.temperature": {
+                    "order": 20,
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "default": 0.7,
+                    "markdownDescription": "Controls the creativity of the AI responses. Lower values (closer to 0) make responses more focused and deterministic, while higher values (closer to 1) make them more creative and varied."
+                },
+                "aiBar.ai.maxTokens": {
+                    "order": 21,
+                    "type": "integer",
+                    "default": 2000,
+                    "minimum": 100,
+                    "markdownDescription": "Maximum number of tokens to generate in responses"
+                },
+                "aiBar.ai.maxHistoryLength": {
+                    "order": 30,
+                    "type": "integer",
+                    "default": 50,
+                    "minimum": 10,
+                    "markdownDescription": "Maximum number of messages to keep in history"
+                },
+                "aiBar.ai.maxContextMessages": {
+                    "order": 31,
+                    "type": "integer",
+                    "default": 5,
+                    "minimum": 3,
+                    "maximum": 10,
+                    "markdownDescription": "Maximum number of previous messages to include as context"
                 }
             }
         }

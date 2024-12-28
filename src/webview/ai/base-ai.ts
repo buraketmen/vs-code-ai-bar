@@ -1,3 +1,4 @@
+import '../vscode'; // Import the VS Code type definitions
 import { getPrompts } from './prompts';
 import { AICommand, AIConfig, AIResponse, CommandParams, CommandPrompt, Message } from './types';
 
@@ -7,14 +8,32 @@ export abstract class BaseAI {
     protected messageHistory: Message[] = [];
 
     constructor(config: AIConfig) {
+        // Get configuration from VS Code settings
+        const vscodeConfig = window.vscode?.workspace?.getConfiguration('aiBar.ai') || {};
+
         this.config = {
-            temperature: 0.7,
-            maxTokens: 2000,
-            maxHistoryLength: 50,
-            maxContextMessages: 5,
-            ...config,
+            temperature: vscodeConfig.temperature ?? 0.7,
+            maxTokens: vscodeConfig.maxTokens ?? 2000,
+            maxHistoryLength: vscodeConfig.maxHistoryLength ?? 50,
+            maxContextMessages: vscodeConfig.maxContextMessages ?? 5,
+            ...config, // Allow overriding with passed config
         };
+
         this.commandPrompts = this.initializeCommandPrompts();
+
+        // Listen for configuration changes
+        window.vscode?.workspace?.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration('aiBar.ai')) {
+                const newConfig = window.vscode?.workspace?.getConfiguration('aiBar.ai');
+                this.updateConfig({
+                    temperature: newConfig.temperature ?? this.config.temperature,
+                    maxTokens: newConfig.maxTokens ?? this.config.maxTokens,
+                    maxHistoryLength: newConfig.maxHistoryLength ?? this.config.maxHistoryLength,
+                    maxContextMessages:
+                        newConfig.maxContextMessages ?? this.config.maxContextMessages,
+                });
+            }
+        });
     }
 
     protected initializeCommandPrompts(): Map<AICommand, CommandPrompt> {

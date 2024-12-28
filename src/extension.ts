@@ -313,16 +313,9 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
             }
         );
     }
-
-    private _getNonce() {
-        let text = '';
-        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < 32; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
-    }
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    console.log('AI Assistant extension is now deactivated!');
+}
