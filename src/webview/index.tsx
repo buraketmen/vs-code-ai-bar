@@ -4,11 +4,31 @@ import { App } from './App';
 import { ChatProvider } from './contexts/chat-context';
 import { ModelProvider } from './contexts/model-context';
 import './styles.css';
-import './vscode'; // Import the VS Code type definitions
+import './types/vscode'; // Import the VS Code type definitions
 
-// Initialize VS Code API
+// Initialize VS Code API and get initial state
 const vscode = acquireVsCodeApi();
+const savedState = vscode.getState();
+
+// Create initial state with a default chat if none exists
+const defaultChat = {
+    id: Date.now().toString(),
+    title: 'New Chat',
+    messages: [],
+    createdAt: new Date().toISOString(),
+    lastUpdatedAt: new Date().toISOString(),
+};
+
+const state = {
+    sessions: savedState?.sessions?.length ? savedState.sessions : [defaultChat],
+    currentSessionId: savedState?.currentSessionId || defaultChat.id,
+    selectedModel: savedState?.selectedModel || null,
+};
+
 window.vscode = vscode;
+
+// Save initial state
+vscode.setState(state);
 
 const root = document.getElementById('root');
 if (!root) {
@@ -17,8 +37,8 @@ if (!root) {
 
 createRoot(root).render(
     <React.StrictMode>
-        <ChatProvider>
-            <ModelProvider>
+        <ChatProvider initialState={state}>
+            <ModelProvider initialModel={state.selectedModel}>
                 <App />
             </ModelProvider>
         </ChatProvider>

@@ -1,6 +1,5 @@
-import { ClaudeModel } from '../types';
+import { AIConfig, AIResponse, ClaudeModel, Message } from '../types/ai';
 import { BaseAI } from './base-ai';
-import { AIConfig, AIResponse, Message } from './types';
 
 interface ClaudeConfig extends AIConfig {
     model?: ClaudeModel;

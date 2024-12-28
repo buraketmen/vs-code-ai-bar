@@ -1,7 +1,12 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { createMessage, MessageDataType, VSCodeMessage, VSCodeMessageType } from './webview/events';
+import {
+    createMessage,
+    MessageDataType,
+    VSCodeMessage,
+    VSCodeMessageType,
+} from './webview/types/events';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -82,6 +87,27 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Register clear state command
+    let clearStateDisposable = vscode.commands.registerCommand('ai-bar.clearState', async () => {
+        const view = provider.currentView;
+        if (!view) {
+            // If view is not available, try to focus it first
+            await vscode.commands.executeCommand('ai-bar-view.focus');
+            return;
+        }
+
+        // Ask for confirmation
+        const selection = await vscode.window.showWarningMessage(
+            'Are you sure you want to clear all chat history? Your settings and API keys will be preserved.',
+            'Yes',
+            'No'
+        );
+
+        if (selection === 'Yes') {
+            view.webview.postMessage(createMessage(VSCodeMessageType.CLEAR_STATE));
+        }
+    });
+
     context.subscriptions.push(
         vscode.commands.registerCommand('ai-bar.openSettings', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', '@ext:ai-bar.ai-bar');
@@ -92,7 +118,8 @@ export function activate(context: vscode.ExtensionContext) {
         focusDisposable,
         toggleHistoryDisposable,
         newChatDisposable,
-        openDisposable
+        openDisposable,
+        clearStateDisposable
     );
 }
 
@@ -306,6 +333,42 @@ class AIAssistantViewProvider implements vscode.WebviewViewProvider {
                                         endLine: selection.end.line + 1,
                                     },
                                 })
+                            );
+                        }
+                        break;
+
+                    case VSCodeMessageType.CLEAR_STATE:
+                        try {
+                            // Get current state to preserve configuration
+                            const currentState = webviewView.webview.getState() || {};
+                            const configToPreserve = {
+                                selectedModel: currentState.selectedModel,
+                                aiBar: currentState.aiBar, // Preserve all aiBar settings
+                            };
+
+                            // Clear state but keep configuration
+                            webviewView.webview.setState(configToPreserve);
+
+                            // Show success message
+                            vscode.window.showInformationMessage(
+                                'Chat history has been cleared successfully. Your settings have been preserved.'
+                            );
+
+                            // Optionally, prompt to reload window
+                            const reloadSelection = await vscode.window.showInformationMessage(
+                                'Would you like to reload the window now?',
+                                'Yes',
+                                'No'
+                            );
+
+                            if (reloadSelection === 'Yes') {
+                                await vscode.commands.executeCommand(
+                                    'workbench.action.reloadWindow'
+                                );
+                            }
+                        } catch (error) {
+                            vscode.window.showErrorMessage(
+                                'Failed to clear chat history: ' + error
                             );
                         }
                         break;

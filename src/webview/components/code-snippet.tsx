@@ -1,7 +1,7 @@
 import { ExternalLink, Minimize2Icon, TrashIcon } from 'lucide-react';
 import * as React from 'react';
 import { useChatContext } from '../contexts/chat-context';
-import { createMessage, VSCodeMessageType } from '../events';
+import { createMessage, VSCodeMessageType } from '../types/events';
 
 export const CodeSnippet: React.FC = () => {
     const { selectedFile, handleRemoveFile, setSelectedFile } = useChatContext();

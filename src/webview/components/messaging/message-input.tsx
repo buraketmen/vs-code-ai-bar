@@ -1,9 +1,9 @@
 import { CornerDownLeft } from 'lucide-react';
 import * as React from 'react';
-import { AICommand } from '../../ai/types';
+import { AICommand } from '../../types/ai';
 import { useChatContext } from '../../contexts/chat-context';
 import { useModelContext } from '../../contexts/model-context';
-import { createMessage, EditorSelectionInfoResponse, VSCodeMessageType } from '../../events';
+import { createMessage, EditorSelectionInfoResponse, VSCodeMessageType } from '../../types/events';
 import ModelSelect from '../model-select';
 import { AttachAssets } from './attach-assets';
 

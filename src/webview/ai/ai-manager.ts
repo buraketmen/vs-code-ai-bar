@@ -1,4 +1,4 @@
-import { AIModel, ChatGPTModel, ClaudeModel } from '../types';
+import { AIModel, ChatGPTModel, ClaudeModel } from '../types/ai';
 import { BaseAI } from './base-ai';
 import { ChatGPT } from './chatgpt';
 import { Claude } from './claude';

@@ -1,6 +1,12 @@
-import '../vscode'; // Import the VS Code type definitions
+import {
+    AICommand,
+    AIConfig,
+    AIResponse,
+    CommandParams,
+    CommandPrompt,
+    Message,
+} from '../types/ai';
 import { getPrompts } from './prompts';
-import { AICommand, AIConfig, AIResponse, CommandParams, CommandPrompt, Message } from './types';
 
 export abstract class BaseAI {
     protected config: AIConfig;

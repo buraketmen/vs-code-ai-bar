@@ -67,6 +67,13 @@
                 "command": "ai-bar.openSettings",
                 "title": "Open Settings",
                 "icon": "$(gear)"
+            },
+            {
+                "command": "ai-bar.clearState",
+                "title": "Clear Chat History",
+                "category": "AI Bar",
+                "icon": "$(clear-all)",
+                "tooltip": "Clear all chat history while preserving your settings"
             }
         ],
         "menus": {
@@ -82,9 +89,14 @@
                     "group": "navigation@2"
                 },
                 {
+                    "command": "ai-bar.clearState",
+                    "when": "view == ai-bar-view",
+                    "group": "secondary@1"
+                },
+                {
                     "command": "ai-bar.openSettings",
                     "when": "view == ai-bar-view",
-                    "group": "navigation@3"
+                    "group": "secondary@2"
                 }
             ]
         },

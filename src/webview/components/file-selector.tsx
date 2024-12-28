@@ -18,7 +18,7 @@ import {
     FileTreeResponseData,
     VSCodeMessageType,
     WorkspacePathData,
-} from '../events';
+} from '../types/events';
 
 interface FileSelectorProps {
     className?: string;

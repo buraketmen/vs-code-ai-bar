@@ -9,9 +9,15 @@ import {
     useState,
 } from 'react';
 import { AIManager } from '../ai/ai-manager';
-import { AICommand, AttachedFile } from '../ai/types';
-import { createMessage, FileOperationData, VSCodeMessageType, WorkspacePathData } from '../events';
-import { AIModel, ChatSession, ChatState, GroupedSessions, Message } from '../types';
+import { ChatNotification } from '../components/notification';
+import { AICommand, AIModel, AttachedFile } from '../types/ai';
+import { ChatSession, ChatState, GroupedSessions, Message } from '../types/chat';
+import {
+    createMessage,
+    FileOperationData,
+    VSCodeMessageType,
+    WorkspacePathData,
+} from '../types/events';
 import { generateUUID } from '../utils/helpers';
 import { getTimeGroup } from '../utils/time';
 
@@ -89,10 +95,18 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     }
 }
 
-export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface ChatProviderProps {
+    children: React.ReactNode;
+    initialState?: {
+        sessions: ChatSession[];
+        currentSessionId: string | null;
+    };
+}
+
+export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialState }) => {
     const [chatState, dispatch] = useReducer(chatReducer, {
-        sessions: [],
-        currentSessionId: null,
+        sessions: initialState?.sessions || [],
+        currentSessionId: initialState?.currentSessionId || null,
     });
 
     const [isTyping, setIsTyping] = useState(false);
@@ -143,15 +157,72 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         // Save sessions to VS Code storage
+        const currentState = window.vscode.getState() || {};
         window.vscode.setState({
+            ...currentState,
             sessions: chatState.sessions,
             currentSessionId: chatState.currentSessionId,
         });
-    }, [chatState]);
+    }, [chatState.sessions, chatState.currentSessionId]);
 
-    const selectSession = useCallback((sessionId: string) => {
-        dispatch({ type: 'SET_CURRENT_SESSION', sessionId });
+    useEffect(() => {
+        if (chatState.sessions.length === 0) {
+            const newSession: ChatSession = {
+                id: Date.now().toString(),
+                title: CHAT_DEFAULT_TITLE,
+                messages: [],
+                createdAt: new Date().toISOString(),
+                lastUpdatedAt: new Date().toISOString(),
+            };
+            dispatch({ type: 'RESTORE_SESSION', session: newSession });
+            dispatch({ type: 'SET_CURRENT_SESSION', sessionId: newSession.id });
+        } else if (!chatState.currentSessionId) {
+            // If there are sessions but no current session, select the most recent one
+            const mostRecentSession = [...chatState.sessions].sort(
+                (a, b) => new Date(b.lastUpdatedAt).getTime() - new Date(a.lastUpdatedAt).getTime()
+            )[0];
+            dispatch({ type: 'SET_CURRENT_SESSION', sessionId: mostRecentSession.id });
+        }
+    }, [chatState.sessions.length, chatState.currentSessionId]);
+
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            const { type } = event.data;
+            if (type === VSCodeMessageType.CLEAR_STATE) {
+                // Clear all state
+                dispatch({ type: 'SET_SESSIONS', sessions: [] });
+                dispatch({ type: 'SET_CURRENT_SESSION', sessionId: null });
+                setDeletedSessions([]);
+                setRedoStack([]);
+                setAttachedFiles([]);
+                setSelectedFile(undefined);
+
+                // Create a new default session
+                const newSession: ChatSession = {
+                    id: Date.now().toString(),
+                    title: CHAT_DEFAULT_TITLE,
+                    messages: [],
+                    createdAt: new Date().toISOString(),
+                    lastUpdatedAt: new Date().toISOString(),
+                };
+                dispatch({ type: 'RESTORE_SESSION', session: newSession });
+                dispatch({ type: 'SET_CURRENT_SESSION', sessionId: newSession.id });
+            }
+        };
+
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
     }, []);
+
+    const selectSession = useCallback(
+        (sessionId: string) => {
+            const session = chatState.sessions.find((s) => s.id === sessionId);
+            if (session) {
+                dispatch({ type: 'SET_CURRENT_SESSION', sessionId });
+            }
+        },
+        [chatState.sessions]
+    );
 
     const createNewChat = useCallback(() => {
         const newSession: ChatSession = {
@@ -391,5 +462,10 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ]
     );
 
-    return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+    return (
+        <ChatContext.Provider value={value}>
+            <ChatNotification />
+            {children}
+        </ChatContext.Provider>
+    );
 };

@@ -1,7 +1,7 @@
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import * as React from 'react';
 import { useChatContext } from '../../contexts/chat-context';
-import { Message } from '../../types';
+import { Message } from '../../types/chat';
 import { TypingIndicator } from './typing-indicator';
 
 interface AIMessageProps {

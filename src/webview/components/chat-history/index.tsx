@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useChatContext } from '../../contexts/chat-context';
-import { VSCodeMessageType } from '../../events';
+import { VSCodeMessageType } from '../../types/events';
 import { ChatGroup } from './chat-group';
 import { EmptyState } from './empty-state';
 import { SearchInput } from './search-input';

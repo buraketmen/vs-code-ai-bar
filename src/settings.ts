@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { AIModel } from './webview/types';
+import { AIModel } from './webview/types/ai';
 
 export class Settings {
     private static readonly CONFIG_SECTION = 'aiBar';

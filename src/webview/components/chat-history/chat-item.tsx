@@ -1,6 +1,6 @@
 import { Edit, Trash } from 'lucide-react';
 import * as React from 'react';
-import { ChatSession } from '../../types';
+import { ChatSession } from '../../types/chat';
 
 type ChatItemProps = {
     session: ChatSession;

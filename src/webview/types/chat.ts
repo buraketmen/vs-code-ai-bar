@@ -26,15 +26,6 @@ export type ChatActions = {
     onDeleteSession: (sessionId: string) => void;
 };
 
-export type ChatGPTModel = 'gpt-4' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
-export type ClaudeModel = 'claude-3-opus-20240229' | 'claude-3-sonnet-20240229';
-export type AIModel = ChatGPTModel | ClaudeModel;
-
-export const AI_MODELS = {
-    chatgpt: ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'] as ChatGPTModel[],
-    claude: ['claude-3-opus-20240229', 'claude-3-sonnet-20240229'] as ClaudeModel[],
-} as const;
-
 export enum TimeGroup {
     LAST_5_MIN = 'Just now',
     LAST_15_MIN = 'Last 15 minutes',

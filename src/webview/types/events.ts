@@ -26,6 +26,7 @@ export enum VSCodeMessageType {
     // Chat related
     NEW_CHAT = 'event:newChat',
     TOGGLE_HISTORY = 'event:toggleHistory',
+    CLEAR_STATE = 'event:clearState',
 }
 
 // Base message interface
@@ -109,6 +110,7 @@ export type VSCodeMessageMap = {
     // Chat related
     [VSCodeMessageType.NEW_CHAT]: undefined;
     [VSCodeMessageType.TOGGLE_HISTORY]: undefined;
+    [VSCodeMessageType.CLEAR_STATE]: undefined;
 };
 
 // Helper type to get the data type for a specific message type

@@ -1,4 +1,4 @@
-import { TimeGroup } from '../types';
+import { TimeGroup } from '../types/chat';
 
 export function getTimeGroup(date: string): TimeGroup {
     const now = new Date();

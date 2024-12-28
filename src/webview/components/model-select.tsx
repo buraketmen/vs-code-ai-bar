@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useModelContext } from '../contexts/model-context';
-import { AI_MODELS } from '../types';
+import { AI_MODELS } from '../types/ai';
 
 const ModelSelectComponent: React.FC = () => {
     const { selectedModel, setSelectedModel } = useModelContext();

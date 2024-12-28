@@ -10,6 +10,13 @@ export interface VSCodeApi {
     };
 }
 
+declare module 'vscode' {
+    interface Webview {
+        setState(state: any): void;
+        getState(): any;
+    }
+}
+
 declare global {
     interface Window {
         vscode: VSCodeApi;

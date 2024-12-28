@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { AI_MODELS, AIModel } from '../types';
+import { AI_MODELS, AIModel } from '../types/ai';
 
 interface ModelContextType {
     selectedModel: AIModel;
@@ -16,15 +16,21 @@ export const useModelContext = () => {
     return context;
 };
 
-export const ModelProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface ModelProviderProps {
+    children: React.ReactNode;
+    initialModel?: AIModel;
+}
+
+export const ModelProvider: React.FC<ModelProviderProps> = ({ children, initialModel }) => {
     const [selectedModel, setSelectedModel] = React.useState<AIModel>(() => {
         const state = window.vscode.getState();
-        return (state?.selectedModel as AIModel) || AI_MODELS.chatgpt[0];
+        return initialModel || state?.selectedModel || AI_MODELS.chatgpt[0];
     });
 
     const handleSetSelectedModel = React.useCallback((model: AIModel) => {
         setSelectedModel(model);
-        window.vscode.setState({ ...window.vscode.getState(), selectedModel: model });
+        const currentState = window.vscode.getState() || {};
+        window.vscode.setState({ ...currentState, selectedModel: model });
     }, []);
 
     const value = React.useMemo(

@@ -1,4 +1,4 @@
-import { AICommand, CommandPrompt } from './types';
+import { AICommand, CommandPrompt } from '../types/ai';
 
 const PROMPTS: Record<AICommand, CommandPrompt> = {
     [AICommand.CHAT]: {

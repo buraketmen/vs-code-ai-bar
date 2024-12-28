@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ChatSession } from '../../types';
+import { ChatSession } from '../../types/chat';
 import { ChatItem } from './chat-item';
 
 type ChatGroupProps = {

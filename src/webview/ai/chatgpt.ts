@@ -1,6 +1,5 @@
-import { ChatGPTModel } from '../types';
+import { AIConfig, AIResponse, ChatGPTModel, Message } from '../types/ai';
 import { BaseAI } from './base-ai';
-import { AIConfig, AIResponse, Message } from './types';
 
 interface ChatGPTConfig extends AIConfig {
     model?: ChatGPTModel;
