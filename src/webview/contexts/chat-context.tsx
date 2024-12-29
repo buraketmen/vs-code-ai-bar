@@ -118,34 +118,66 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
 
     const aiManager = AIManager.getInstance();
 
-    useEffect(() => {
-        window.vscode.postMessage(createMessage(VSCodeMessageType.GET_WORKSPACE_PATH));
-        const handleWorkspaceMessage = (event: MessageEvent) => {
+    const handleMessage = useCallback(
+        (event: MessageEvent) => {
             const { type, data } = event.data;
-            if (type === VSCodeMessageType.WORKSPACE_PATH) {
-                const { path } = data as WorkspacePathData;
-                setWorkspacePath(path);
+
+            switch (type) {
+                case VSCodeMessageType.NEW_CHAT:
+                    createNewChat();
+                    break;
+                case VSCodeMessageType.WORKSPACE_PATH:
+                    const { path } = data as WorkspacePathData;
+                    setWorkspacePath(path);
+                    break;
+
+                case VSCodeMessageType.FILE_DELETED:
+                    const { path: deletedPath } = data as FileOperationData;
+                    setAttachedFiles((prev) => prev.filter((file) => file.path !== deletedPath));
+                    break;
+
+                case VSCodeMessageType.CLEAR_STATE:
+                    // Clear all state
+                    dispatch({ type: 'SET_SESSIONS', sessions: [] });
+                    dispatch({ type: 'SET_CURRENT_SESSION', sessionId: null });
+                    setDeletedSessions([]);
+                    setRedoStack([]);
+                    setAttachedFiles([]);
+                    setSelectedFile(undefined);
+
+                    // Create a new default session
+                    const newSession: ChatSession = {
+                        id: Date.now().toString(),
+                        title: CHAT_DEFAULT_TITLE,
+                        messages: [],
+                        createdAt: new Date().toISOString(),
+                        lastUpdatedAt: new Date().toISOString(),
+                    };
+                    dispatch({ type: 'RESTORE_SESSION', session: newSession });
+                    dispatch({ type: 'SET_CURRENT_SESSION', sessionId: newSession.id });
+                    break;
             }
-        };
-        window.addEventListener('message', handleWorkspaceMessage);
-        return () => window.removeEventListener('message', handleWorkspaceMessage);
-    }, []);
+        },
+        [
+            dispatch,
+            setWorkspacePath,
+            setAttachedFiles,
+            setDeletedSessions,
+            setRedoStack,
+            setSelectedFile,
+        ]
+    );
 
     useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            const { type, data } = event.data;
-            if (type === VSCodeMessageType.FILE_DELETED) {
-                const { path } = data as FileOperationData;
-                setAttachedFiles((prev) => prev.filter((file) => file.path !== path));
-            }
-        };
+        // Request workspace path when component mounts
+        window.vscode.postMessage(createMessage(VSCodeMessageType.GET_WORKSPACE_PATH));
 
         window.addEventListener('message', handleMessage);
         return () => window.removeEventListener('message', handleMessage);
-    }, [workspacePath, selectedFile]);
+    }, [handleMessage]);
 
+    // Load initial state from VS Code storage
     useEffect(() => {
-        // Load saved sessions from VS Code storage
         const savedState = window.vscode.getState();
         if (savedState?.sessions) {
             dispatch({ type: 'SET_SESSIONS', sessions: savedState.sessions });
@@ -155,8 +187,8 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
         }
     }, []);
 
+    // Save state to VS Code storage when it changes
     useEffect(() => {
-        // Save sessions to VS Code storage
         const currentState = window.vscode.getState() || {};
         window.vscode.setState({
             ...currentState,
@@ -165,6 +197,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
         });
     }, [chatState.sessions, chatState.currentSessionId]);
 
+    // Handle initial session creation and selection
     useEffect(() => {
         if (chatState.sessions.length === 0) {
             const newSession: ChatSession = {
@@ -184,35 +217,6 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
             dispatch({ type: 'SET_CURRENT_SESSION', sessionId: mostRecentSession.id });
         }
     }, [chatState.sessions.length, chatState.currentSessionId]);
-
-    useEffect(() => {
-        const handleMessage = (event: MessageEvent) => {
-            const { type } = event.data;
-            if (type === VSCodeMessageType.CLEAR_STATE) {
-                // Clear all state
-                dispatch({ type: 'SET_SESSIONS', sessions: [] });
-                dispatch({ type: 'SET_CURRENT_SESSION', sessionId: null });
-                setDeletedSessions([]);
-                setRedoStack([]);
-                setAttachedFiles([]);
-                setSelectedFile(undefined);
-
-                // Create a new default session
-                const newSession: ChatSession = {
-                    id: Date.now().toString(),
-                    title: CHAT_DEFAULT_TITLE,
-                    messages: [],
-                    createdAt: new Date().toISOString(),
-                    lastUpdatedAt: new Date().toISOString(),
-                };
-                dispatch({ type: 'RESTORE_SESSION', session: newSession });
-                dispatch({ type: 'SET_CURRENT_SESSION', sessionId: newSession.id });
-            }
-        };
-
-        window.addEventListener('message', handleMessage);
-        return () => window.removeEventListener('message', handleMessage);
-    }, []);
 
     const selectSession = useCallback(
         (sessionId: string) => {

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { AIModel } from './webview/types/ai';
+import { AI_MODELS, AIModel } from './webview/types/ai';
 
 export class Settings {
     private static readonly CONFIG_SECTION = 'aiBar';
@@ -13,7 +13,7 @@ export class Settings {
     }
 
     static getDefaultModel(): AIModel {
-        return this.get<AIModel>('model.default', 'gpt-3.5-turbo');
+        return this.get<AIModel>('model.default', AI_MODELS.chatgpt[0]);
     }
 
     private static get<T>(key: string, defaultValue: T): T {
