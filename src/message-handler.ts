@@ -13,14 +13,14 @@ export async function handleWebviewMessage(
     switch (message.type) {
         case VSCodeMessageType.LOG:
             console.log(
-                'Webview:',
+                '[DEBUG]',
                 (message.data as MessageDataType<VSCodeMessageType.LOG>).message
             );
             break;
 
         case VSCodeMessageType.ERROR:
             console.error(
-                'Webview Error:',
+                '[ERROR]',
                 (message.data as MessageDataType<VSCodeMessageType.ERROR>).message
             );
             break;
@@ -205,8 +205,6 @@ function handleGetConfiguration(webviewView: vscode.WebviewView) {
         'ai.maxHistoryLength': config.get('ai.maxHistoryLength'),
         'ai.maxContextMessages': config.get('ai.maxContextMessages'),
     };
-
-    console.log('Sending configuration:', configuration);
 
     webviewView.webview.postMessage(
         createMessage(VSCodeMessageType.CONFIGURATION_UPDATE, { configuration })
