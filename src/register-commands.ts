@@ -61,7 +61,7 @@ export function registerCommands(
         );
 
         if (selection === 'Yes') {
-            view.webview.postMessage(createMessage(VSCodeMessageType.CLEAR_STATE));
+            view.webview.postMessage(createMessage(VSCodeMessageType.CLEAR_HISTORY));
         }
     });
 

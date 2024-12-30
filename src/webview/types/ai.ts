@@ -1,10 +1,27 @@
-export type ChatGPTModel = 'gpt-4' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
-export type ClaudeModel = 'claude-3-opus-20240229' | 'claude-3-sonnet-20240229';
-export type AIModel = ChatGPTModel | ClaudeModel;
+export const OPENAI_MODELS = {
+    GPT4: 'gpt-4',
+    GPT4_TURBO: 'gpt-4-turbo',
+    GPT4O: 'gpt-4o',
+    GPT4O_MINI: 'gpt-4o-mini',
+    O1: 'o1',
+    O1_MINI: 'o1-mini',
+    O1_PREVIEW: 'o1-preview',
+} as const;
+
+export const CLAUDE_MODELS = {
+    OPUS: 'claude-3-opus',
+    HAIKU: 'claude-3.5-haiku',
+    SONNET: 'claude-3.5-sonnet',
+    SONNET_20241022: 'claude-3.5-sonnet-20241022',
+} as const;
+
+export type OpenAIModel = (typeof OPENAI_MODELS)[keyof typeof OPENAI_MODELS];
+export type ClaudeModel = (typeof CLAUDE_MODELS)[keyof typeof CLAUDE_MODELS];
+export type AIModel = OpenAIModel | ClaudeModel;
 
 export const AI_MODELS = {
-    chatgpt: ['gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo'] as ChatGPTModel[],
-    claude: ['claude-3-opus-20240229', 'claude-3-sonnet-20240229'] as ClaudeModel[],
+    openai: Object.values(OPENAI_MODELS),
+    claude: Object.values(CLAUDE_MODELS),
 } as const;
 
 export type Role = 'system' | 'user' | 'assistant';
@@ -22,14 +39,24 @@ export enum AICommand {
     CHAT = 'chat',
 }
 
-export interface AIConfig {
-    apiKey?: string;
-    model?: string;
+export interface BaseAIConfig {
+    openaiApiKey?: string;
+    anthropicApiKey?: string;
     temperature?: number;
     maxTokens?: number;
     maxHistoryLength?: number;
     maxContextMessages?: number;
 }
+
+export interface OpenAIConfig extends BaseAIConfig {
+    model: OpenAIModel;
+}
+
+export interface ClaudeConfig extends BaseAIConfig {
+    model: ClaudeModel;
+}
+
+export type AIConfig = OpenAIConfig | ClaudeConfig;
 
 export interface AIResponse {
     text: string;

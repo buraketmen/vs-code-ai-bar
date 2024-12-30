@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { AI_MODELS, AIModel } from '../types/ai';
+import { AIModel, OPENAI_MODELS } from '../types/ai';
+import { WebviewState } from '../types/vscode';
 
 interface ModelContextType {
     selectedModel: AIModel;
@@ -23,13 +24,13 @@ interface ModelProviderProps {
 
 export const ModelProvider: React.FC<ModelProviderProps> = ({ children, initialModel }) => {
     const [selectedModel, setSelectedModel] = React.useState<AIModel>(() => {
-        const state = window.vscode.getState();
-        return initialModel || state?.selectedModel || AI_MODELS.chatgpt[0];
+        const state = window.vscode.getState() as WebviewState;
+        return initialModel || state?.selectedModel || OPENAI_MODELS.GPT4;
     });
 
     const handleSetSelectedModel = React.useCallback((model: AIModel) => {
         setSelectedModel(model);
-        const currentState = window.vscode.getState() || {};
+        const currentState = (window.vscode.getState() as WebviewState) || {};
         window.vscode.setState({ ...currentState, selectedModel: model });
     }, []);
 

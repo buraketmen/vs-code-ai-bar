@@ -2,6 +2,7 @@ import { ExternalLink, Minimize2Icon, TrashIcon } from 'lucide-react';
 import * as React from 'react';
 import { useChatContext } from '../contexts/chat-context';
 import { createMessage, VSCodeMessageType } from '../types/events';
+import CodeHighlight from './code-highlight';
 
 export const CodeSnippet: React.FC = () => {
     const { selectedFile, handleRemoveFile, setSelectedFile } = useChatContext();
@@ -43,9 +44,10 @@ export const CodeSnippet: React.FC = () => {
                     <TrashIcon size={14} />
                 </button>
             </div>
-            <pre className="m-0 whitespace-pre-wrap break-words p-1 text-xs">
-                {selectedFile.content}
-            </pre>
+            <CodeHighlight
+                content={selectedFile.content}
+                extension={selectedFile.name.split('.').pop() ?? 'txt'}
+            />
         </div>
     );
 };

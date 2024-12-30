@@ -22,7 +22,7 @@ const defaultChat = {
 const state = {
     sessions: savedState?.sessions?.length ? savedState.sessions : [defaultChat],
     currentSessionId: savedState?.currentSessionId || defaultChat.id,
-    selectedModel: savedState?.selectedModel || null,
+    selectedModel: savedState?.selectedModel,
 };
 
 window.vscode = vscode;

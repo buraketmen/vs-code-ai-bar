@@ -1,15 +1,12 @@
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import * as React from 'react';
-import { useChatContext } from '../../contexts/chat-context';
 import { Message } from '../../types/chat';
-import { TypingIndicator } from './typing-indicator';
 
 interface AIMessageProps {
     message: Message;
 }
 
 export const AIMessage: React.FC<AIMessageProps> = ({ message }) => {
-    const { isTyping } = useChatContext();
     const [isCopied, setIsCopied] = React.useState(false);
 
     const handleCopy = () => {
@@ -17,14 +14,6 @@ export const AIMessage: React.FC<AIMessageProps> = ({ message }) => {
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
-
-    if (isTyping) {
-        return (
-            <div className="space-y-1">
-                <TypingIndicator />
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-1">

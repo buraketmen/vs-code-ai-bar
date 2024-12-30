@@ -11,8 +11,8 @@ const ModelSelectComponent: React.FC = () => {
             onChange={(e) => setSelectedModel(e.target.value as any)}
             className="w-full min-w-[64px] max-w-[112px] truncate rounded-sm border-none bg-vscode-bg-secondary py-1 text-xs opacity-50 outline-none hover:opacity-100 focus:outline-none focus:ring-0 focus-visible:outline-none [&_optgroup]:!font-semibold [&_option]:pl-0 [&_option]:!font-normal"
         >
-            <optgroup label="ChatGPT">
-                {AI_MODELS.chatgpt.map((model) => (
+            <optgroup label="OpenAI">
+                {AI_MODELS.openai.map((model) => (
                     <option key={model} value={model} className="truncate">
                         {model}
                     </option>

@@ -45,8 +45,12 @@ export async function handleWebviewMessage(
             handleGetEditorSelectionInfo(webviewView);
             break;
 
-        case VSCodeMessageType.CLEAR_STATE:
+        case VSCodeMessageType.CLEAR_HISTORY:
             await handleClearState(webviewView);
+            break;
+
+        case VSCodeMessageType.GET_CONFIGURATION:
+            handleGetConfiguration(webviewView);
             break;
     }
 }
@@ -155,15 +159,21 @@ function handleGetEditorSelectionInfo(webviewView: vscode.WebviewView) {
 
 async function handleClearState(webviewView: vscode.WebviewView) {
     try {
-        // Get current state to preserve configuration
-        const currentState = webviewView.webview.getState() || {};
-        const configToPreserve = {
-            selectedModel: currentState.selectedModel,
-            aiBar: currentState.aiBar, // Preserve all aiBar settings
+        // Get current configuration
+        const config = vscode.workspace.getConfiguration('aiBar');
+        const configuration = {
+            'api.openaiApiKey': config.get('api.openaiApiKey'),
+            'api.anthropicApiKey': config.get('api.anthropicApiKey'),
+            'ai.temperature': config.get('ai.temperature'),
+            'ai.maxTokens': config.get('ai.maxTokens'),
+            'ai.maxHistoryLength': config.get('ai.maxHistoryLength'),
+            'ai.maxContextMessages': config.get('ai.maxContextMessages'),
         };
 
-        // Clear state but keep configuration
-        webviewView.webview.setState(configToPreserve);
+        // Send clear state message to webview with preserved configuration
+        webviewView.webview.postMessage(
+            createMessage(VSCodeMessageType.CLEAR_HISTORY, { currentConfiguration: configuration })
+        );
 
         // Show success message
         vscode.window.showInformationMessage(
@@ -183,4 +193,22 @@ async function handleClearState(webviewView: vscode.WebviewView) {
     } catch (error) {
         vscode.window.showErrorMessage('Failed to clear chat history: ' + error);
     }
+}
+
+function handleGetConfiguration(webviewView: vscode.WebviewView) {
+    const config = vscode.workspace.getConfiguration('aiBar');
+    const configuration = {
+        'api.openaiApiKey': config.get('api.openaiApiKey'),
+        'api.anthropicApiKey': config.get('api.anthropicApiKey'),
+        'ai.temperature': config.get('ai.temperature'),
+        'ai.maxTokens': config.get('ai.maxTokens'),
+        'ai.maxHistoryLength': config.get('ai.maxHistoryLength'),
+        'ai.maxContextMessages': config.get('ai.maxContextMessages'),
+    };
+
+    console.log('Sending configuration:', configuration);
+
+    webviewView.webview.postMessage(
+        createMessage(VSCodeMessageType.CONFIGURATION_UPDATE, { configuration })
+    );
 }

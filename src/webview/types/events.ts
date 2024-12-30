@@ -26,7 +26,11 @@ export enum VSCodeMessageType {
     // Chat related
     NEW_CHAT = 'event:newChat',
     TOGGLE_HISTORY = 'event:toggleHistory',
-    CLEAR_STATE = 'event:clearState',
+    CLEAR_HISTORY = 'event:clearHistory',
+
+    // Configuration related
+    GET_CONFIGURATION = 'event:getConfiguration',
+    CONFIGURATION_UPDATE = 'event:configurationUpdate',
 }
 
 // Base message interface
@@ -80,6 +84,7 @@ export interface EditorSelectionInfoResponse {
 // Log related interfaces
 export interface LogMessageData {
     message: string;
+    level: 'debug' | 'error';
 }
 
 // Message type mapping
@@ -110,7 +115,11 @@ export type VSCodeMessageMap = {
     // Chat related
     [VSCodeMessageType.NEW_CHAT]: undefined;
     [VSCodeMessageType.TOGGLE_HISTORY]: undefined;
-    [VSCodeMessageType.CLEAR_STATE]: undefined;
+    [VSCodeMessageType.CLEAR_HISTORY]: { currentConfiguration?: Record<string, any> };
+
+    // Configuration related
+    [VSCodeMessageType.GET_CONFIGURATION]: undefined;
+    [VSCodeMessageType.CONFIGURATION_UPDATE]: { configuration: Record<string, any> };
 };
 
 // Helper type to get the data type for a specific message type

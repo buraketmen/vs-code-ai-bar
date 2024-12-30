@@ -1,22 +1,22 @@
-import { AIResponse, CLAUDE_MODELS, ClaudeConfig, Message } from '../types/ai';
+import { AIResponse, Message, OPENAI_MODELS, OpenAIConfig } from '../types/ai';
 import { AIManager } from './ai-manager';
 import { BaseAI } from './base-ai';
 
-export class Claude extends BaseAI {
-    constructor(config: ClaudeConfig) {
+export class OpenAI extends BaseAI {
+    constructor(config: OpenAIConfig) {
         super({
             ...config,
-            model: config.model || CLAUDE_MODELS.SONNET,
+            model: config.model || OPENAI_MODELS.GPT4,
         });
     }
 
     protected async validateConfig(): Promise<void> {
         const config = await this.getConfig();
-        if (!config.anthropicApiKey) {
-            throw new Error('Anthropic API key is required');
+        if (!config.openaiApiKey) {
+            throw new Error('OpenAI API key is required.');
         }
-        if (!config.model || !AIManager.isClaudeModel(config.model)) {
-            throw new Error('Invalid Claude model');
+        if (!config.model || !AIManager.isOpenAIModel(config.model)) {
+            throw new Error('Invalid OpenAI model.');
         }
     }
 
@@ -24,16 +24,11 @@ export class Claude extends BaseAI {
         await this.validateConfig();
         const config = await this.getConfig();
 
-        if (!config.anthropicApiKey) {
-            throw new Error('Anthropic API key is required');
-        }
-
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': config.anthropicApiKey,
-                'anthropic-version': '2023-06-01',
+                Authorization: `Bearer ${config.openaiApiKey}`,
             },
             body: JSON.stringify({
                 model: config.model,
@@ -41,32 +36,33 @@ export class Claude extends BaseAI {
                     role: msg.role,
                     content: msg.content,
                 })),
+                temperature: config.temperature,
                 max_tokens: config.maxTokens,
             }),
         });
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(`Anthropic API error: ${error.error?.message || response.statusText}`);
+            throw new Error(`OpenAI API error: ${error.error?.message || response.statusText}`);
         }
 
         const data = await response.json();
         return {
-            text: data.content[0].text,
+            text: data.choices[0].message.content,
             usage: {
-                promptTokens: data.usage.input_tokens,
-                completionTokens: data.usage.output_tokens,
-                totalTokens: data.usage.input_tokens + data.usage.output_tokens,
+                promptTokens: data.usage.prompt_tokens,
+                completionTokens: data.usage.completion_tokens,
+                totalTokens: data.usage.total_tokens,
             },
         };
     }
 
     getName(): string {
-        return 'Claude';
+        return 'OpenAI';
     }
 
     async getDescription(): Promise<string> {
         const config = await this.getConfig();
-        return `Anthropic's model (${config.model})`;
+        return `OpenAI's model (${config.model})`;
     }
 }

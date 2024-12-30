@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { AIManager } from '../ai/ai-manager';
 import { ChatNotification } from '../components/notification';
-import { AICommand, AIModel, AttachedFile } from '../types/ai';
+import { AICommand, AIModel, AttachedFile, OPENAI_MODELS } from '../types/ai';
 import { ChatSession, ChatState, GroupedSessions, Message } from '../types/chat';
 import {
     createMessage,
@@ -18,7 +18,9 @@ import {
     VSCodeMessageType,
     WorkspacePathData,
 } from '../types/events';
+import { WebviewState } from '../types/vscode';
 import { generateUUID } from '../utils/helpers';
+import { logError } from '../utils/logger';
 import { getTimeGroup } from '../utils/time';
 
 interface ChatContextType {
@@ -136,8 +138,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
                     setAttachedFiles((prev) => prev.filter((file) => file.path !== deletedPath));
                     break;
 
-                case VSCodeMessageType.CLEAR_STATE:
-                    // Clear all state
+                case VSCodeMessageType.CLEAR_HISTORY:
+                    // Clear all state except configuration
+                    const currentConfiguration = (data as any)?.currentConfiguration;
+                    const currentState = window.vscode.getState();
                     dispatch({ type: 'SET_SESSIONS', sessions: [] });
                     dispatch({ type: 'SET_CURRENT_SESSION', sessionId: null });
                     setDeletedSessions([]);
@@ -155,6 +159,14 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
                     };
                     dispatch({ type: 'RESTORE_SESSION', session: newSession });
                     dispatch({ type: 'SET_CURRENT_SESSION', sessionId: newSession.id });
+
+                    window.vscode.setState({
+                        sessions: [newSession],
+                        currentSessionId: newSession.id,
+                        selectedModel: currentState?.selectedModel || OPENAI_MODELS.GPT4,
+                        config: currentConfiguration,
+                    } as WebviewState);
+
                     break;
             }
         },
@@ -180,7 +192,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
     useEffect(() => {
         const savedState = window.vscode.getState();
         if (savedState?.sessions) {
-            dispatch({ type: 'SET_SESSIONS', sessions: savedState.sessions });
+            dispatch({ type: 'SET_SESSIONS', sessions: savedState.sessions as ChatSession[] });
             if (savedState.currentSessionId) {
                 dispatch({ type: 'SET_CURRENT_SESSION', sessionId: savedState.currentSessionId });
             }
@@ -189,7 +201,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
 
     // Save state to VS Code storage when it changes
     useEffect(() => {
-        const currentState = window.vscode.getState() || {};
+        const currentState = (window.vscode.getState() as WebviewState) || {};
         window.vscode.setState({
             ...currentState,
             sessions: chatState.sessions,
@@ -278,11 +290,10 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
             setIsTyping(true);
 
             try {
-                const aiInstance = aiManager.getModel(model);
+                const aiInstance = await aiManager.getModel(model);
                 const response = await aiInstance.executeCommand(command, {
                     message: text,
                 });
-
                 const aiResponse: Message = {
                     id: (Date.now() + 1).toString(),
                     text: response.text,
@@ -296,6 +307,7 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
                     lastUpdatedAt: new Date().toISOString(),
                 }));
             } catch (error) {
+                logError(`Error: ${error}`);
                 const errorMessage: Message = {
                     id: (Date.now() + 1).toString(),
                     text: error instanceof Error ? error.message : 'Unknown error occurred!',

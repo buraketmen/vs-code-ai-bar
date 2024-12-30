@@ -127,31 +127,31 @@
                     "order": 1,
                     "type": "string",
                     "default": "ctrl+shift+j",
-                    "markdownDescription": "Keyboard shortcut to open AI Bar panel (requires restart)"
+                    "markdownDescription": "Keyboard shortcut to open AI Bar panel. Restart required after updating."
                 },
                 "aiBar.shortcuts.openSettings": {
                     "order": 2,
                     "type": "string",
                     "default": "ctrl+shift+a",
-                    "markdownDescription": "Keyboard shortcut to open AI Bar settings (requires restart)"
+                    "markdownDescription": "Keyboard shortcut to open AI Bar settings. Restart required after updating."
                 },
                 "aiBar.shortcuts.newChat": {
                     "order": 3,
                     "type": "string",
                     "default": "ctrl+shift+k",
-                    "markdownDescription": "Keyboard shortcut to start a new chat (requires restart)"
+                    "markdownDescription": "Keyboard shortcut to start a new chat. Restart required after updating."
                 },
-                "aiBar.api.openai": {
+                "aiBar.api.openaiApiKey": {
                     "order": 10,
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "OpenAI API Key for ChatGPT models. [Get API Key](https://platform.openai.com/api-keys)"
+                    "markdownDescription": "OpenAI API Key for GPT models. Restart required after setting. [Get API Key](https://platform.openai.com/api-keys)"
                 },
-                "aiBar.api.anthropic": {
+                "aiBar.api.anthropicApiKey": {
                     "order": 11,
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "Anthropic API Key for Claude models. [Get API Key](https://console.anthropic.com/settings/keys)"
+                    "markdownDescription": "Anthropic API Key for Claude models. Restart required after setting. [Get API Key](https://console.anthropic.com/settings/keys)"
                 },
                 "aiBar.ai.temperature": {
                     "order": 20,
@@ -159,21 +159,21 @@
                     "minimum": 0,
                     "maximum": 1,
                     "default": 0.7,
-                    "markdownDescription": "Controls the creativity of the AI responses. Lower values (closer to 0) make responses more focused and deterministic, while higher values (closer to 1) make them more creative and varied."
+                    "markdownDescription": "Controls the creativity of the AI responses. Lower values (closer to 0) make responses more focused and deterministic, while higher values (closer to 1) make them more creative and varied. Restart required after setting."
                 },
                 "aiBar.ai.maxTokens": {
                     "order": 21,
                     "type": "integer",
                     "default": 2000,
                     "minimum": 100,
-                    "markdownDescription": "Maximum number of tokens to generate in responses"
+                    "markdownDescription": "Maximum number of tokens to generate in responses. Restart required after updating."
                 },
                 "aiBar.ai.maxHistoryLength": {
                     "order": 30,
                     "type": "integer",
                     "default": 50,
                     "minimum": 10,
-                    "markdownDescription": "Maximum number of messages to keep in history"
+                    "markdownDescription": "Maximum number of messages to keep in history. Restart required after updating."
                 },
                 "aiBar.ai.maxContextMessages": {
                     "order": 31,
@@ -181,7 +181,7 @@
                     "default": 5,
                     "minimum": 3,
                     "maximum": 10,
-                    "markdownDescription": "Maximum number of previous messages to include as context"
+                    "markdownDescription": "Maximum number of previous messages to include as context. Restart required after updating."
                 }
             }
         }
