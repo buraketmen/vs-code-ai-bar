@@ -26,30 +26,37 @@ export async function handleWebviewMessage(
             break;
 
         case VSCodeMessageType.GET_FILE_TREE:
+            console.log('[DEBUG] Getting file tree');
             await handleGetFileTree(webviewView, message);
             break;
 
         case VSCodeMessageType.READ_FILE:
+            console.log('[DEBUG] Reading file');
             await handleReadFile(webviewView, message);
             break;
 
         case VSCodeMessageType.OPEN_FILE:
+            console.log('[DEBUG] Opening file');
             await handleOpenFile(message);
             break;
 
         case VSCodeMessageType.GET_WORKSPACE_PATH:
+            console.log('[DEBUG] Getting workspace path');
             handleGetWorkspacePath(webviewView);
             break;
 
         case VSCodeMessageType.GET_EDITOR_SELECTION_INFO:
+            console.log('[DEBUG] Getting editor selection info');
             handleGetEditorSelectionInfo(webviewView);
             break;
 
         case VSCodeMessageType.CLEAR_HISTORY:
+            console.log('[DEBUG] Clearing history');
             await handleClearState(webviewView);
             break;
 
         case VSCodeMessageType.GET_CONFIGURATION:
+            console.log('[DEBUG] Getting configuration');
             handleGetConfiguration(webviewView);
             break;
     }
