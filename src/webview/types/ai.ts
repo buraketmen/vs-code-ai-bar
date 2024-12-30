@@ -78,11 +78,17 @@ export interface CommandPrompt {
     userPromptTemplate: string;
 }
 
-export interface ChatParams {
+export interface BaseCommandParams {
+    message?: string;
+    images?: string[];
+    files?: AttachedFile[];
+}
+
+export interface ChatParams extends BaseCommandParams {
     message: string;
 }
 
-export interface CodeParams {
+export interface CodeParams extends BaseCommandParams {
     code: string;
 }
 

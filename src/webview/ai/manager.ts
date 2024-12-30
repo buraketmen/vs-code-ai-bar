@@ -1,8 +1,8 @@
 import { Settings } from '../settings';
 import { AIModel, CLAUDE_MODELS, ClaudeModel, OPENAI_MODELS, OpenAIModel } from '../types/ai';
-import { BaseAI } from './base-ai';
-import { Claude } from './claude';
-import { OpenAI } from './openai';
+import { BaseAI } from './base';
+import { Claude } from './providers/claude';
+import { OpenAI } from './providers/openai';
 
 export class AIManager {
     private static instance: AIManager;

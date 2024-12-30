@@ -8,7 +8,7 @@ import {
     useReducer,
     useState,
 } from 'react';
-import { AIManager } from '../ai/ai-manager';
+import { AIManager } from '../ai/manager';
 import { ChatNotification } from '../components/notification';
 import { AICommand, AIModel, AttachedFile, OPENAI_MODELS } from '../types/ai';
 import { ChatSession, ChatState, GroupedSessions, Message } from '../types/chat';
@@ -291,19 +291,46 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children, initialSta
 
             try {
                 const aiInstance = await aiManager.getModel(model);
-                const response = await aiInstance.executeCommand(command, {
-                    message: text,
-                });
+
+                // Create initial AI response message
                 const aiResponse: Message = {
                     id: (Date.now() + 1).toString(),
-                    text: response.text,
+                    text: '',
                     role: 'assistant',
                     timestamp: new Date().toLocaleTimeString(),
                 };
 
+                // Add empty AI response to session immediately
                 updateSession(chatState.currentSessionId!, (s) => ({
                     ...s,
                     messages: [...s.messages, aiResponse],
+                    lastUpdatedAt: new Date().toISOString(),
+                }));
+
+                // Execute with streaming
+                const response = await aiInstance.execute(
+                    command,
+                    {
+                        message: text,
+                        files: attachedFiles,
+                    },
+                    // Stream callback
+                    (chunk: string) => {
+                        updateSession(chatState.currentSessionId!, (s) => ({
+                            ...s,
+                            messages: s.messages.map((m) =>
+                                m.id === aiResponse.id ? { ...m, text: m.text + chunk } : m
+                            ),
+                        }));
+                    }
+                );
+
+                // Update final message with complete response
+                updateSession(chatState.currentSessionId!, (s) => ({
+                    ...s,
+                    messages: s.messages.map((m) =>
+                        m.id === aiResponse.id ? { ...m, text: response.text } : m
+                    ),
                     lastUpdatedAt: new Date().toISOString(),
                 }));
             } catch (error) {
